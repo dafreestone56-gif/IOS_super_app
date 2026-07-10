@@ -227,6 +227,8 @@ enum DeveloperToolKind: String, CaseIterable, Identifiable {
     case regex = "Regex Matches"
     case colorHexToRGB = "Hex Color to RGB"
     case timestamp = "Unix Timestamp"
+
+    var id: String { rawValue }
 }
 
 enum TerminalMode: String, CaseIterable, Identifiable, Codable {

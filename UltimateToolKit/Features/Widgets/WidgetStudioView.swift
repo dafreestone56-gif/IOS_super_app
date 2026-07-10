@@ -62,7 +62,7 @@ struct WidgetStudioView: View {
         let wifi = services.network.status
         let trend = services.sensors.metrics.first(where: { $0.title == "Battery" })?.trend ?? []
 
-        VStack(spacing: 12) {
+        return VStack(spacing: 12) {
             HStack(spacing: 12) {
                 ZStack {
                     Circle()

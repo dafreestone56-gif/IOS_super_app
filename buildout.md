@@ -20,9 +20,9 @@ Required upkeep:
 ## Current Execution State
 
 - Current phase: Full prototype QA and macOS validation handoff
-- Current step: Run GitHub Actions/Xcode build, then sign and test on iOS 26 hardware
-- Overall status: Full local prototype implemented; Xcode/device validation pending
-- Last updated: 2026-07-09
+- Current step: Rerun GitHub Actions unsigned IPA build after resolving the latest Swift compile errors from supplied logs
+- Overall status: Full local prototype implemented; current CI compile blockers patched; Xcode/device validation pending
+- Last updated: 2026-07-10
 - Source plan: `Plan.md`
 - UI reference: `UI UX.png`
 
@@ -53,6 +53,7 @@ Required upkeep:
 - [x] After first GitHub Actions exit-code-65 report, switched project language mode to Swift 5 for CI compatibility
 - [x] Removed incomplete AppIcon asset set that could fail asset catalog compilation
 - [x] Reordered workflow to build/package IPA before optional simulator tests and upload build logs on failure
+- [x] Resolved latest GitHub Actions Swift compile blockers from supplied logs: `DeveloperToolKind` `Identifiable` conformance, Widget Studio opaque return, App Shortcuts builder syntax, TCP probe concurrency guard, and deprecated Bluetooth audio option
 
 ## In Progress
 
@@ -64,8 +65,8 @@ Required upkeep:
 - [x] Decide whether to scaffold a native Xcode project, Swift Package structure, or both
 - [x] Create initial iOS app shell
 - [x] Implement design system matching `UI UX.png`
-- [ ] Run `xcodebuild` on macOS or GitHub Actions
-- [ ] Resolve any Xcode/iOS 26 SDK compile issues found by CI
+- [~] Run `xcodebuild` on macOS or GitHub Actions
+- [~] Resolve any Xcode/iOS 26 SDK compile issues found by CI
 - [ ] Sign the unsigned IPA during sideloading
 - [ ] Run real-device QA on iOS 26 for BLE, NFC, camera, microphone/audio, haptics, and permissions
 - [ ] Confirm provisioning profile includes NFC reader session entitlement
@@ -257,7 +258,7 @@ Goal: create the usable first screen and shared UI language.
 - [x] Add favorites grid matching the mockup.
 - [x] Add tools list with disclosure rows.
 - [x] Add Settings / More placeholder.
-- [x] Add mock module data.
+- [x] Add real module catalog metadata without seeded user/demo records.
 - [x] Add reusable `MetricCard`, `ToolRow`, `ModuleCard`, `Panel`, and section header components.
 - [x] Add basic app logging and recent event list.
 - [~] Add snapshot or UI tests for root navigation if feasible.
@@ -721,6 +722,7 @@ Each module under `Docs/Modules/` should include:
 | 2026-07-09 | Promoted implementation to full testable prototype | Added persisted automations, BLE GATT flows, NFC write/history, camera preview/code detection, audio meter, CoreHaptics playback, TCP probe, entitlements, and simulator-test CI step |
 | 2026-07-09 | Removed runtime-seeded sample/demo data | App now starts with empty user-owned state or live device readings |
 | 2026-07-10 | Hardened CI after first exit-code-65 report | Lowered minimum deployment target, switched to Swift 5 language mode, removed incomplete app icon asset, moved optional tests after IPA packaging, and added uploaded build logs |
+| 2026-07-10 | Fixed latest Swift compile errors from uploaded Actions logs | Added missing enum identity, corrected Widget Studio return semantics, updated App Shortcuts builder usage, and cleaned two SDK warnings before the next CI run |
 
 ## Deferred / Research Only
 

@@ -41,19 +41,17 @@ struct FormatJSONIntent: AppIntent {
 @available(iOS 16.0, *)
 struct ToolkitShortcutsProvider: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
-        [
-            AppShortcut(
-                intent: GetBatteryLevelIntent(),
-                phrases: ["Get battery level in \(.applicationName)"],
-                shortTitle: "Battery",
-                systemImageName: "battery.100"
-            ),
-            AppShortcut(
-                intent: FormatJSONIntent(),
-                phrases: ["Format JSON in \(.applicationName)"],
-                shortTitle: "Format JSON",
-                systemImageName: "curlybraces"
-            )
-        ]
+        AppShortcut(
+            intent: GetBatteryLevelIntent(),
+            phrases: ["Get battery level in \(.applicationName)"],
+            shortTitle: "Battery",
+            systemImageName: "battery.100"
+        )
+        AppShortcut(
+            intent: FormatJSONIntent(),
+            phrases: ["Format JSON in \(.applicationName)"],
+            shortTitle: "Format JSON",
+            systemImageName: "curlybraces"
+        )
     }
 }

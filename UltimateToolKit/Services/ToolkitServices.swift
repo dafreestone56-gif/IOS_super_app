@@ -519,6 +519,29 @@ final class BluetoothService: NSObject, ObservableObject, CBCentralManagerDelega
     }
 }
 
+private final class TCPProbeCompletion: @unchecked Sendable {
+    private let lock = NSLock()
+    private var didResume = false
+    private let connection: NWConnection
+    private let continuation: CheckedContinuation<String, Never>
+
+    init(connection: NWConnection, continuation: CheckedContinuation<String, Never>) {
+        self.connection = connection
+        self.continuation = continuation
+    }
+
+    func finish(_ result: String) {
+        lock.lock()
+        let shouldResume = !didResume
+        didResume = true
+        lock.unlock()
+
+        guard shouldResume else { return }
+        connection.cancel()
+        continuation.resume(returning: result)
+    }
+}
+
 final class NetworkService: ObservableObject {
     @Published private(set) var status = "Starting"
     @Published private(set) var isExpensive = false
@@ -566,33 +589,23 @@ final class NetworkService: ObservableObject {
 
         return await withCheckedContinuation { continuation in
             let connection = NWConnection(host: NWEndpoint.Host(trimmedHost), port: nwPort, using: .tcp)
-            let lock = NSLock()
-            var resumed = false
-
-            func finish(_ result: String) {
-                lock.lock()
-                defer { lock.unlock() }
-                guard !resumed else { return }
-                resumed = true
-                connection.cancel()
-                continuation.resume(returning: result)
-            }
+            let completion = TCPProbeCompletion(connection: connection, continuation: continuation)
 
             connection.stateUpdateHandler = { state in
                 switch state {
                 case .ready:
-                    finish("\(trimmedHost):\(port) is reachable.")
+                    completion.finish("\(trimmedHost):\(port) is reachable.")
                 case .failed(let error):
-                    finish("\(trimmedHost):\(port) failed: \(error.localizedDescription)")
+                    completion.finish("\(trimmedHost):\(port) failed: \(error.localizedDescription)")
                 case .waiting(let error):
-                    finish("\(trimmedHost):\(port) waiting: \(error.localizedDescription)")
+                    completion.finish("\(trimmedHost):\(port) waiting: \(error.localizedDescription)")
                 default:
                     break
                 }
             }
             connection.start(queue: DispatchQueue.global(qos: .utility))
             DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + timeout) {
-                finish("\(trimmedHost):\(port) timed out after \(Int(timeout))s.")
+                completion.finish("\(trimmedHost):\(port) timed out after \(Int(timeout))s.")
             }
         }
     }
@@ -843,7 +856,7 @@ final class AudioService: NSObject, ObservableObject, AVAudioRecorderDelegate {
     func startMetering() {
         do {
             let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playAndRecord, mode: .measurement, options: [.defaultToSpeaker, .allowBluetooth])
+            try session.setCategory(.playAndRecord, mode: .measurement, options: [.defaultToSpeaker, .allowBluetoothHFP])
             try session.setActive(true)
             let url = FileManager.default.temporaryDirectory.appendingPathComponent("ToolkitAudioMeter.caf")
             let settings: [String: Any] = [
