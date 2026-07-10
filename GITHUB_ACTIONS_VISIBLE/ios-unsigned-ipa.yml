@@ -1,0 +1,88 @@
+name: Build Unsigned iOS IPA
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ "v*" ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build unsigned IPA
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: List project schemes
+        run: |
+          set -euo pipefail
+          mkdir -p build/logs
+          xcodebuild -list -project UltimateToolKit.xcodeproj 2>&1 | tee build/logs/xcodebuild-list.log
+
+      - name: Build unsigned app
+        run: |
+          set -euo pipefail
+          mkdir -p build/logs
+          xcodebuild \
+            -project UltimateToolKit.xcodeproj \
+            -scheme UltimateToolKit \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -derivedDataPath build/DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            clean build 2>&1 | tee build/logs/unsigned-build.log
+
+      - name: Package unsigned IPA
+        run: |
+          set -euo pipefail
+          APP_PATH="$(find build/DerivedData/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' -print -quit)"
+          test -n "$APP_PATH"
+          rm -rf build/Payload
+          mkdir -p build/Payload
+          cp -R "$APP_PATH" build/Payload/
+          (cd build && zip -qry UltimateToolKit-unsigned.ipa Payload)
+
+      - name: Upload unsigned IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: UltimateToolKit-unsigned
+          path: build/UltimateToolKit-unsigned.ipa
+          retention-days: 14
+
+      - name: Run unit tests
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          mkdir -p build/logs
+          SIM_ID="$(xcrun simctl list devices available | awk -F '[()]' '/iPhone/ { print $2; exit }')"
+          if [ -z "${SIM_ID:-}" ]; then
+            echo "No available iPhone simulator found; skipping simulator tests." | tee build/logs/unit-tests.log
+            exit 0
+          fi
+          xcodebuild \
+            -project UltimateToolKit.xcodeproj \
+            -scheme UltimateToolKit \
+            -configuration Debug \
+            -destination "id=$SIM_ID" \
+            -derivedDataPath build/TestDerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            test 2>&1 | tee build/logs/unit-tests.log
+
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: UltimateToolKit-build-logs
+          path: build/logs
+          if-no-files-found: ignore
+          retention-days: 14

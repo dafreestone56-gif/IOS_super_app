@@ -1,0 +1,511 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		001000000000000000000001 /* UltimateToolKitApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 002000000000000000000001 /* UltimateToolKitApp.swift */; };
+		001000000000000000000002 /* ToolkitModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 002000000000000000000002 /* ToolkitModels.swift */; };
+		001000000000000000000003 /* ToolkitDesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 002000000000000000000003 /* ToolkitDesignSystem.swift */; };
+		001000000000000000000004 /* ToolkitServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = 002000000000000000000004 /* ToolkitServices.swift */; };
+		001000000000000000000005 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 002000000000000000000005 /* HomeView.swift */; };
+		001000000000000000000006 /* SensorsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 002000000000000000000006 /* SensorsView.swift */; };
+		001000000000000000000007 /* BluetoothView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 002000000000000000000007 /* BluetoothView.swift */; };
+		001000000000000000000008 /* NFCView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 002000000000000000000008 /* NFCView.swift */; };
+		001000000000000000000009 /* NetworkView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 002000000000000000000009 /* NetworkView.swift */; };
+		00100000000000000000000A /* DeveloperToolsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00200000000000000000000A /* DeveloperToolsView.swift */; };
+		00100000000000000000000B /* AutomationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00200000000000000000000B /* AutomationView.swift */; };
+		00100000000000000000000C /* WidgetStudioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00200000000000000000000C /* WidgetStudioView.swift */; };
+		00100000000000000000000D /* ShortcutsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00200000000000000000000D /* ShortcutsView.swift */; };
+		00100000000000000000000E /* MoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00200000000000000000000E /* MoreView.swift */; };
+		00100000000000000000000F /* ToolkitAppIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00200000000000000000000F /* ToolkitAppIntents.swift */; };
+		001000000000000000000010 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 002000000000000000000010 /* Assets.xcassets */; };
+		001000000000000000000011 /* DeveloperUtilityServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 002000000000000000000011 /* DeveloperUtilityServiceTests.swift */; };
+		001000000000000000000012 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 002000000000000000000015 /* CameraView.swift */; };
+		001000000000000000000013 /* AudioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 002000000000000000000016 /* AudioView.swift */; };
+		001000000000000000000014 /* HapticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 002000000000000000000017 /* HapticsView.swift */; };
+		001000000000000000000015 /* AIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 002000000000000000000018 /* AIView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		003000000000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 004000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 005000000000000000000001;
+			remoteInfo = UltimateToolKit;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		002000000000000000000001 /* UltimateToolKitApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/UltimateToolKitApp.swift; sourceTree = "<group>"; };
+		002000000000000000000002 /* ToolkitModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models/ToolkitModels.swift; sourceTree = "<group>"; };
+		002000000000000000000003 /* ToolkitDesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem/ToolkitDesignSystem.swift; sourceTree = "<group>"; };
+		002000000000000000000004 /* ToolkitServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/ToolkitServices.swift; sourceTree = "<group>"; };
+		002000000000000000000005 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Home/HomeView.swift; sourceTree = "<group>"; };
+		002000000000000000000006 /* SensorsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Sensors/SensorsView.swift; sourceTree = "<group>"; };
+		002000000000000000000007 /* BluetoothView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Bluetooth/BluetoothView.swift; sourceTree = "<group>"; };
+		002000000000000000000008 /* NFCView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/NFC/NFCView.swift; sourceTree = "<group>"; };
+		002000000000000000000009 /* NetworkView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Network/NetworkView.swift; sourceTree = "<group>"; };
+		00200000000000000000000A /* DeveloperToolsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/DeveloperTools/DeveloperToolsView.swift; sourceTree = "<group>"; };
+		00200000000000000000000B /* AutomationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Automation/AutomationView.swift; sourceTree = "<group>"; };
+		00200000000000000000000C /* WidgetStudioView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Widgets/WidgetStudioView.swift; sourceTree = "<group>"; };
+		00200000000000000000000D /* ShortcutsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Shortcuts/ShortcutsView.swift; sourceTree = "<group>"; };
+		00200000000000000000000E /* MoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Settings/MoreView.swift; sourceTree = "<group>"; };
+		00200000000000000000000F /* ToolkitAppIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Shortcuts/ToolkitAppIntents.swift; sourceTree = "<group>"; };
+		002000000000000000000010 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Resources/Assets.xcassets; sourceTree = "<group>"; };
+		002000000000000000000011 /* DeveloperUtilityServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeveloperUtilityServiceTests.swift; sourceTree = "<group>"; };
+		002000000000000000000012 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		002000000000000000000013 /* UltimateToolKit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = UltimateToolKit.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		002000000000000000000014 /* UltimateToolKitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UltimateToolKitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		002000000000000000000015 /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Camera/CameraView.swift; sourceTree = "<group>"; };
+		002000000000000000000016 /* AudioView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Audio/AudioView.swift; sourceTree = "<group>"; };
+		002000000000000000000017 /* HapticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Haptics/HapticsView.swift; sourceTree = "<group>"; };
+		002000000000000000000018 /* AIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/AI/AIView.swift; sourceTree = "<group>"; };
+		002000000000000000000019 /* UltimateToolKit.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = UltimateToolKit.entitlements; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		006000000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		006000000000000000000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		007000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				007000000000000000000002 /* UltimateToolKit */,
+				007000000000000000000003 /* UltimateToolKitTests */,
+				007000000000000000000004 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		007000000000000000000002 /* UltimateToolKit */ = {
+			isa = PBXGroup;
+			children = (
+				002000000000000000000001 /* UltimateToolKitApp.swift */,
+				002000000000000000000002 /* ToolkitModels.swift */,
+				002000000000000000000003 /* ToolkitDesignSystem.swift */,
+				002000000000000000000004 /* ToolkitServices.swift */,
+				002000000000000000000005 /* HomeView.swift */,
+				002000000000000000000006 /* SensorsView.swift */,
+				002000000000000000000007 /* BluetoothView.swift */,
+				002000000000000000000008 /* NFCView.swift */,
+				002000000000000000000009 /* NetworkView.swift */,
+				00200000000000000000000A /* DeveloperToolsView.swift */,
+				00200000000000000000000B /* AutomationView.swift */,
+				00200000000000000000000C /* WidgetStudioView.swift */,
+				00200000000000000000000D /* ShortcutsView.swift */,
+				00200000000000000000000E /* MoreView.swift */,
+				00200000000000000000000F /* ToolkitAppIntents.swift */,
+				002000000000000000000015 /* CameraView.swift */,
+				002000000000000000000016 /* AudioView.swift */,
+				002000000000000000000017 /* HapticsView.swift */,
+				002000000000000000000018 /* AIView.swift */,
+				002000000000000000000019 /* UltimateToolKit.entitlements */,
+				002000000000000000000010 /* Assets.xcassets */,
+				002000000000000000000012 /* Info.plist */,
+			);
+			path = UltimateToolKit;
+			sourceTree = "<group>";
+		};
+		007000000000000000000003 /* UltimateToolKitTests */ = {
+			isa = PBXGroup;
+			children = (
+				002000000000000000000011 /* DeveloperUtilityServiceTests.swift */,
+			);
+			path = UltimateToolKitTests;
+			sourceTree = "<group>";
+		};
+		007000000000000000000004 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				002000000000000000000013 /* UltimateToolKit.app */,
+				002000000000000000000014 /* UltimateToolKitTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		005000000000000000000001 /* UltimateToolKit */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 008000000000000000000002 /* Build configuration list for PBXNativeTarget "UltimateToolKit" */;
+			buildPhases = (
+				009000000000000000000001 /* Sources */,
+				006000000000000000000001 /* Frameworks */,
+				009000000000000000000002 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = UltimateToolKit;
+			productName = UltimateToolKit;
+			productReference = 002000000000000000000013 /* UltimateToolKit.app */;
+			productType = "com.apple.product-type.application";
+		};
+		005000000000000000000002 /* UltimateToolKitTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 008000000000000000000003 /* Build configuration list for PBXNativeTarget "UltimateToolKitTests" */;
+			buildPhases = (
+				009000000000000000000003 /* Sources */,
+				006000000000000000000002 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				00A000000000000000000001 /* PBXTargetDependency */,
+			);
+			name = UltimateToolKitTests;
+			productName = UltimateToolKitTests;
+			productReference = 002000000000000000000014 /* UltimateToolKitTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		004000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					005000000000000000000001 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+					005000000000000000000002 = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = 005000000000000000000001;
+					};
+				};
+			};
+			buildConfigurationList = 008000000000000000000001 /* Build configuration list for PBXProject "UltimateToolKit" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 007000000000000000000001;
+			productRefGroup = 007000000000000000000004 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				005000000000000000000001 /* UltimateToolKit */,
+				005000000000000000000002 /* UltimateToolKitTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		009000000000000000000002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				001000000000000000000010 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		009000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				001000000000000000000001 /* UltimateToolKitApp.swift in Sources */,
+				001000000000000000000002 /* ToolkitModels.swift in Sources */,
+				001000000000000000000003 /* ToolkitDesignSystem.swift in Sources */,
+				001000000000000000000004 /* ToolkitServices.swift in Sources */,
+				001000000000000000000005 /* HomeView.swift in Sources */,
+				001000000000000000000006 /* SensorsView.swift in Sources */,
+				001000000000000000000007 /* BluetoothView.swift in Sources */,
+				001000000000000000000008 /* NFCView.swift in Sources */,
+				001000000000000000000009 /* NetworkView.swift in Sources */,
+				00100000000000000000000A /* DeveloperToolsView.swift in Sources */,
+				00100000000000000000000B /* AutomationView.swift in Sources */,
+				00100000000000000000000C /* WidgetStudioView.swift in Sources */,
+				00100000000000000000000D /* ShortcutsView.swift in Sources */,
+				00100000000000000000000E /* MoreView.swift in Sources */,
+				00100000000000000000000F /* ToolkitAppIntents.swift in Sources */,
+				001000000000000000000012 /* CameraView.swift in Sources */,
+				001000000000000000000013 /* AudioView.swift in Sources */,
+				001000000000000000000014 /* HapticsView.swift in Sources */,
+				001000000000000000000015 /* AIView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		009000000000000000000003 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				001000000000000000000011 /* DeveloperUtilityServiceTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		00A000000000000000000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 005000000000000000000001 /* UltimateToolKit */;
+			targetProxy = 003000000000000000000001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		00B000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+			};
+			name = Debug;
+		};
+		00B000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		00B000000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_ENTITLEMENTS = UltimateToolKit/UltimateToolKit.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = UltimateToolKit/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.personal.playgroundtoolkit;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		00B000000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_ENTITLEMENTS = UltimateToolKit/UltimateToolKit.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = UltimateToolKit/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.personal.playgroundtoolkit;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		00B000000000000000000005 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.personal.playgroundtoolkit.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/UltimateToolKit.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/UltimateToolKit";
+			};
+			name = Debug;
+		};
+		00B000000000000000000006 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.personal.playgroundtoolkit.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/UltimateToolKit.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/UltimateToolKit";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		008000000000000000000001 /* Build configuration list for PBXProject "UltimateToolKit" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				00B000000000000000000001 /* Debug */,
+				00B000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		008000000000000000000002 /* Build configuration list for PBXNativeTarget "UltimateToolKit" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				00B000000000000000000003 /* Debug */,
+				00B000000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		008000000000000000000003 /* Build configuration list for PBXNativeTarget "UltimateToolKitTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				00B000000000000000000005 /* Debug */,
+				00B000000000000000000006 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 004000000000000000000001 /* Project object */;
+}

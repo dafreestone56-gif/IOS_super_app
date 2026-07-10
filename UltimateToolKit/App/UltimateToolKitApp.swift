@@ -1,0 +1,119 @@
+import SwiftUI
+
+@main
+@MainActor
+struct UltimateToolKitApp: App {
+    @StateObject private var services = ToolkitServices()
+
+    var body: some Scene {
+        WindowGroup {
+            RootView()
+                .environmentObject(services)
+                .preferredColorScheme(.dark)
+        }
+    }
+}
+
+enum MainTab: String, CaseIterable, Identifiable {
+    case home
+    case automation
+    case shortcuts
+    case widgets
+    case more
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .home: "Home"
+        case .automation: "Automation"
+        case .shortcuts: "Shortcuts"
+        case .widgets: "Widgets"
+        case .more: "More"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .home: "house.fill"
+        case .automation: "gearshape.2"
+        case .shortcuts: "point.3.connected.trianglepath.dotted"
+        case .widgets: "square.grid.2x2"
+        case .more: "ellipsis"
+        }
+    }
+}
+
+struct RootView: View {
+    @State private var selection: MainTab = .home
+
+    var body: some View {
+        TabView(selection: $selection) {
+            NavigationStack {
+                HomeView()
+                    .navigationDestination(for: ToolkitModule.self) { module in
+                        ModuleDestinationView(module: module)
+                    }
+            }
+            .tabItem { Label(MainTab.home.title, systemImage: MainTab.home.symbol) }
+            .tag(MainTab.home)
+
+            NavigationStack { AutomationView() }
+                .tabItem { Label(MainTab.automation.title, systemImage: MainTab.automation.symbol) }
+                .tag(MainTab.automation)
+
+            NavigationStack { ShortcutsView() }
+                .tabItem { Label(MainTab.shortcuts.title, systemImage: MainTab.shortcuts.symbol) }
+                .tag(MainTab.shortcuts)
+
+            NavigationStack { WidgetStudioView() }
+                .tabItem { Label(MainTab.widgets.title, systemImage: MainTab.widgets.symbol) }
+                .tag(MainTab.widgets)
+
+            NavigationStack {
+                MoreView()
+                    .navigationDestination(for: ToolkitModule.self) { module in
+                        ModuleDestinationView(module: module)
+                    }
+            }
+            .tabItem { Label(MainTab.more.title, systemImage: MainTab.more.symbol) }
+            .tag(MainTab.more)
+        }
+        .tint(.blue)
+    }
+}
+
+struct ModuleDestinationView: View {
+    let module: ToolkitModule
+
+    var body: some View {
+        switch module {
+        case .bluetooth:
+            BluetoothView()
+        case .sensors:
+            SensorsView()
+        case .wifi, .network:
+            NetworkView()
+        case .nfc:
+            NFCView()
+        case .automation:
+            AutomationView()
+        case .widgetStudio:
+            WidgetStudioView()
+        case .developerTools:
+            DeveloperToolsView()
+        case .shortcuts:
+            ShortcutsView()
+        case .settings:
+            SettingsView()
+        case .camera:
+            CameraView()
+        case .audio:
+            AudioView()
+        case .haptics:
+            HapticsView()
+        case .ai:
+            AIView()
+        }
+    }
+}
