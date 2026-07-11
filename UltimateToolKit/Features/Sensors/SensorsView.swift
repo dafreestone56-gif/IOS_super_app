@@ -249,8 +249,9 @@ private struct DetailedSensorGraph: View {
     let isLogging: Bool
 
     private var values: [Double] {
-        let sessionValues = samples.suffix(240).map(\.value)
-        return sessionValues.isEmpty ? metric.trend : sessionValues
+        let sessionValues = samples.suffix(240).map(\.value).filter { $0.isFinite }
+        let trendValues = metric.trend.filter { $0.isFinite }
+        return sessionValues.isEmpty ? trendValues : sessionValues
     }
 
     var body: some View {
@@ -314,7 +315,7 @@ private struct SensorLineGraph: View {
     }
 
     private func graphPath(size: CGSize) -> Path {
-        let safeValues = Array(values.suffix(240))
+        let safeValues = Array(values.filter { $0.isFinite }.suffix(240))
         guard safeValues.count > 1 else { return Path() }
         let minimum = safeValues.min() ?? 0
         let maximum = safeValues.max() ?? 1

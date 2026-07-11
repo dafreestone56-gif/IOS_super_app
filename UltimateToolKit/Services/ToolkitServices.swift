@@ -78,6 +78,11 @@ final class SensorService: NSObject, ObservableObject, CLLocationManagerDelegate
         locationAuthorization = Self.authorizationDescription(locationManager.authorizationStatus)
     }
 
+    func refreshSnapshot() {
+        UIDevice.current.isBatteryMonitoringEnabled = true
+        update()
+    }
+
     func start() {
         UIDevice.current.isBatteryMonitoringEnabled = true
         UIDevice.current.isProximityMonitoringEnabled = true
@@ -336,6 +341,7 @@ final class SensorService: NSObject, ObservableObject, CLLocationManagerDelegate
 
     private func append(_ key: String, value: Double?) -> [Double] {
         guard let value else { return history[key] ?? [] }
+        guard value.isFinite else { return history[key] ?? [] }
         var values = history[key] ?? []
         values.append(value)
         history[key] = Array(values.suffix(180))
@@ -347,6 +353,7 @@ final class SensorService: NSObject, ObservableObject, CLLocationManagerDelegate
         let date = Date()
         let samples = metrics.compactMap { metric -> SensorLogSample? in
             guard let value = metric.trend.last else { return nil }
+            guard value.isFinite else { return nil }
             return SensorLogSample(date: date, sensor: metric.title, value: value, detail: metric.detail)
         }
         guard !samples.isEmpty else { return }

@@ -20,8 +20,8 @@ Required upkeep:
 ## Current Execution State
 
 - Current phase: Live hardware iteration and QA handoff
-- Current step: Re-run GitHub Actions after patching WidgetKit/app Swift 5 issues, Haptics timeline type-checking, AI Lab missing-return, and App Shortcuts metadata limit blockers, then validate live sensor logging, NFC signing diagnostics, saved haptic sequences, expanded Shortcuts connectors, and embedded WidgetKit extension on iOS 26 hardware
-- Overall status: Expanded local prototype now includes session-based sensor logging/charts, broad AppIntents connectors, haptic sequence persistence, improved NFC diagnostics, and a real WidgetKit extension target; latest supplied CI failures were traced to Swift 5 shorthand, Haptics type-checking, AI return, and App Shortcuts metadata-limit issues; all are patched locally
+- Current step: Rebuild and retest after patching instant Sensors and Widget Studio crashes, then validate live sensor logging, NFC signing diagnostics, saved haptic sequences, expanded Shortcuts connectors, and embedded WidgetKit extension on iOS 26 hardware
+- Overall status: Expanded local prototype now includes session-based sensor logging/charts, broad AppIntents connectors, haptic sequence persistence, improved NFC diagnostics, and a real WidgetKit extension target; latest device crash report was traced to the shared sensor startup path and hardened locally
 - Last updated: 2026-07-11
 - Source plan: `Plan.md`
 - UI reference: `UI UX.png`
@@ -65,6 +65,7 @@ Required upkeep:
 - [x] Fixed follow-up GitHub Actions Haptics compile timeout by splitting the timeline bar expression into small typed subviews
 - [x] Fixed follow-up GitHub Actions AI Lab missing-return failure and cleaned related widget AppIntent/concurrency warnings from supplied logs
 - [x] Fixed follow-up GitHub Actions AppIntents metadata failure by reducing visible App Shortcuts from 21 to Apple's hard limit of 10 while retaining all AppIntent action types
+- [x] Fixed likely instant Sensors and Widget Studio crash by adding `NSMotionUsageDescription`, avoiding full sensor stream startup in Widget Studio, stabilizing sensor metric IDs, and filtering non-finite graph/log values
 
 ## In Progress
 
@@ -757,6 +758,7 @@ Each module under `Docs/Modules/` should include:
 | 2026-07-10 | Fixed Haptics timeline type-checking timeout from uploaded GitHub Actions logs | Extracted the complex timeline bar expression into typed `HapticTimelineView` and `HapticTimelineBar` views |
 | 2026-07-10 | Fixed AI Lab missing-return failure from uploaded GitHub Actions logs | Added explicit return for the local AI draft multiline string, made the widget display AppIntent parameter optional, and removed a future Swift concurrency warning in HTTP history recording |
 | 2026-07-11 | Fixed App Shortcuts metadata export failure from uploaded GitHub Actions logs | Curated the visible App Shortcuts catalog to 10 entries, preserving the remaining AppIntent actions for manual Shortcuts use |
+| 2026-07-11 | Hardened Sensors and Widget Studio startup after real-device crash feedback | Added the required motion privacy string, made Widget Studio use a lightweight sensor snapshot, gave live sensor metrics stable IDs, and sanitized graph/log values |
 
 ## Deferred / Research Only
 

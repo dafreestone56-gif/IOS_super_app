@@ -56,6 +56,8 @@
 	<string>Location enables heading, compass, geofence automations, and network context when you choose those tools.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Microphone access powers audio levels, waveform analysis, recording, and speech tools.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>Motion access powers live accelerometer, gyroscope, magnetometer, barometer, and device-motion sensor dashboards.</string>
 	<key>NFCReaderUsageDescription</key>
 	<string>NFC access is used to read and write supported NDEF tags when you start a scan.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

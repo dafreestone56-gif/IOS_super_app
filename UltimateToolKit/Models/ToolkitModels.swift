@@ -128,7 +128,7 @@ struct ToolItem: Identifiable {
 }
 
 struct SensorMetric: Identifiable {
-    let id = UUID()
+    var id: String { title }
     let title: String
     let detail: String
     let value: String

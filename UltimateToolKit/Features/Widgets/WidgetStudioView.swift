@@ -126,7 +126,7 @@ struct WidgetStudioView: View {
         }
         .toolkitScreen()
         .onAppear {
-            services.sensors.start()
+            services.sensors.refreshSnapshot()
             services.network.refreshInterfaces()
         }
     }
