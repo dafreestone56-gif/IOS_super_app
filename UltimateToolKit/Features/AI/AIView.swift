@@ -101,7 +101,7 @@ struct AIView: View {
             module = "Automation"
         }
 
-        """
+        return """
         Local Draft
         Module: \(module)
         Trigger: \(trigger)

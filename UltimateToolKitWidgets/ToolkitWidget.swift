@@ -24,10 +24,14 @@ struct ToolkitWidgetConfigurationIntent: WidgetConfigurationIntent {
     static var description = IntentDescription("Choose the dashboard style shown by the widget.")
 
     @Parameter(title: "Display")
-    var display: ToolkitWidgetDisplay
+    var display: ToolkitWidgetDisplay?
 
     init() {
         display = .system
+    }
+
+    var resolvedDisplay: ToolkitWidgetDisplay {
+        return display ?? .system
     }
 }
 
@@ -98,10 +102,10 @@ struct ToolkitWidgetEntryView: View {
     }
 
     private var title: String {
-        if let draft = entry.draft, entry.configuration.display == .system {
+        if let draft = entry.draft, entry.configuration.resolvedDisplay == .system {
             return draft.name
         }
-        switch entry.configuration.display {
+        switch entry.configuration.resolvedDisplay {
         case .system: return "System"
         case .sensors: return "Sensors"
         case .network: return "Network"
@@ -110,10 +114,10 @@ struct ToolkitWidgetEntryView: View {
     }
 
     private var primary: String {
-        if let draft = entry.draft, entry.configuration.display == .system {
+        if let draft = entry.draft, entry.configuration.resolvedDisplay == .system {
             return "\(draft.components.count) saved component\(draft.components.count == 1 ? "" : "s")"
         }
-        switch entry.configuration.display {
+        switch entry.configuration.resolvedDisplay {
         case .system: return "Device toolkit ready"
         case .sensors: return "Start live logging"
         case .network: return "Run diagnostics"
@@ -122,7 +126,7 @@ struct ToolkitWidgetEntryView: View {
     }
 
     private var icon: String {
-        switch entry.configuration.display {
+        switch entry.configuration.resolvedDisplay {
         case .system: return "iphone.gen3"
         case .sensors: return "waveform.path.ecg"
         case .network: return "network"
@@ -131,7 +135,7 @@ struct ToolkitWidgetEntryView: View {
     }
 
     private var tint: Color {
-        if let accent = entry.draft?.accent, entry.configuration.display == .system {
+        if let accent = entry.draft?.accent, entry.configuration.resolvedDisplay == .system {
             switch accent {
             case "Green": return Color.green
             case "Orange": return Color.orange
@@ -141,7 +145,7 @@ struct ToolkitWidgetEntryView: View {
             default: return Color.blue
             }
         }
-        switch entry.configuration.display {
+        switch entry.configuration.resolvedDisplay {
         case .system: return Color.blue
         case .sensors: return Color.green
         case .network: return Color.cyan

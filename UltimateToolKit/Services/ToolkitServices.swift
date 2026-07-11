@@ -840,8 +840,10 @@ final class NetworkService: NSObject, ObservableObject, NetServiceBrowserDelegat
             let body = String(data: data, encoding: .utf8) ?? "\(data.count) bytes"
             let elapsed = Int(Date().timeIntervalSince(start) * 1000)
             let result = "HTTP \(code)  \(elapsed) ms\n\n\(body)"
+            let requestMethod = request.httpMethod ?? method.uppercased()
+            let historyTitle = "\(requestMethod) \(url.host ?? rawURL)"
             await MainActor.run {
-                recordHistory(title: "\(request.httpMethod ?? method.uppercased()) \(url.host ?? rawURL)", request: rawURL, response: result, duration: elapsed)
+                recordHistory(title: historyTitle, request: rawURL, response: result, duration: elapsed)
             }
             return result
         } catch {

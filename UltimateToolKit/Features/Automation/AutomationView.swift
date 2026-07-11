@@ -188,7 +188,7 @@ struct AutomationView: View {
     }
 
     private var dryRunSummary: String {
-        """
+        return """
         Rule: \(title.isEmpty ? "Untitled Automation" : title)
         Enabled: \(enableAutomation ? "Yes" : "No")
         Trigger: \(composedTrigger)
