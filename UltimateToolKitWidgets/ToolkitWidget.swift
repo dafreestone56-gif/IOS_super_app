@@ -142,10 +142,10 @@ struct ToolkitWidgetEntryView: View {
             }
         }
         switch entry.configuration.display {
-        case .system: .blue
-        case .sensors: .green
-        case .network: .cyan
-        case .shortcuts: .purple
+        case .system: return Color.blue
+        case .sensors: return Color.green
+        case .network: return Color.cyan
+        case .shortcuts: return Color.purple
         }
     }
 

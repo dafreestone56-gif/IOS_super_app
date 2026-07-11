@@ -97,16 +97,16 @@ enum ToolkitModule: String, CaseIterable, Identifiable, Hashable {
 
     var tint: Color {
         switch self {
-        case .bluetooth, .wifi, .network, .shortcuts: .blue
-        case .sensors: .green
-        case .nfc: .orange
-        case .automation, .haptics: .purple
-        case .widgetStudio: .pink
-        case .camera: .cyan
-        case .audio: .indigo
-        case .developerTools: .gray
-        case .ai: .mint
-        case .settings: .secondary
+        case .bluetooth, .wifi, .network, .shortcuts: return Color.blue
+        case .sensors: return Color.green
+        case .nfc: return Color.orange
+        case .automation, .haptics: return Color.purple
+        case .widgetStudio: return Color.pink
+        case .camera: return Color.cyan
+        case .audio: return Color.indigo
+        case .developerTools: return Color.gray
+        case .ai: return Color.mint
+        case .settings: return Color.secondary
         }
     }
 
@@ -288,12 +288,12 @@ struct AutomationRule: Identifiable, Codable, Hashable {
 
     var tint: Color {
         switch tintKey {
-        case "green": .green
-        case "orange": .orange
-        case "red": .red
-        case "blue": .blue
-        case "pink": .pink
-        default: .purple
+        case "green": return Color.green
+        case "orange": return Color.orange
+        case "red": return Color.red
+        case "blue": return Color.blue
+        case "pink": return Color.pink
+        default: return Color.purple
         }
     }
 }

@@ -276,12 +276,12 @@ struct WidgetStudioView: View {
 
     private var accentColor: Color {
         switch accent {
-        case "Green": .green
-        case "Orange": .orange
-        case "Pink": .pink
-        case "Purple": .purple
-        case "Cyan": .cyan
-        default: .blue
+        case "Green": return Color.green
+        case "Orange": return Color.orange
+        case "Pink": return Color.pink
+        case "Purple": return Color.purple
+        case "Cyan": return Color.cyan
+        default: return Color.blue
         }
     }
 
