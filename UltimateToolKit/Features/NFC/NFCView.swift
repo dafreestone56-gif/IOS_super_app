@@ -21,10 +21,27 @@ struct NFCView: View {
                         }
                         Spacer()
                         Button("Scan") {
-                            services.nfc.beginRead()
-                            services.log("NFC read session requested")
+                            if services.nfc.beginRead() {
+                                services.log("NFC read session started")
+                            } else {
+                                services.log("NFC read unavailable: \(services.nfc.availabilityDetail)")
+                            }
                         }
                         .buttonStyle(.borderedProminent)
+                    }
+                }
+
+                GlassPanel {
+                    HStack(alignment: .top, spacing: 10) {
+                        Image(systemName: "checklist.checked")
+                            .foregroundStyle(.orange)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Reader Capability")
+                                .font(.headline)
+                            Text(services.nfc.availabilityDetail)
+                                .font(.caption)
+                                .foregroundStyle(AppTheme.secondaryText)
+                        }
                     }
                 }
 
@@ -54,8 +71,11 @@ struct NFCView: View {
                             .padding(10)
                             .background(AppTheme.elevatedPanel, in: RoundedRectangle(cornerRadius: 8))
                         Button {
-                            services.nfc.beginWrite(text: writeText)
-                            services.log("NFC write session requested")
+                            if services.nfc.beginWrite(text: writeText) {
+                                services.log("NFC write session started")
+                            } else {
+                                services.log("NFC write unavailable: \(services.nfc.availabilityDetail)")
+                            }
                         } label: {
                             Label("Write Tag", systemImage: "square.and.pencil")
                         }
@@ -91,6 +111,10 @@ struct NFCView: View {
                                 services.log("NFC history cleared")
                             }
                             .buttonStyle(.bordered)
+                            Button("Log History JSON") {
+                                services.log(services.nfc.exportHistoryJSON())
+                            }
+                            .buttonStyle(.bordered)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -100,5 +124,8 @@ struct NFCView: View {
         }
         .navigationTitle("NFC")
         .toolkitScreen()
+        .onAppear {
+            services.nfc.refreshAvailability()
+        }
     }
 }

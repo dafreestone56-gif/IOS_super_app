@@ -1,6 +1,7 @@
 import AVFoundation
 import SwiftUI
 import UIKit
+import Vision
 
 struct CameraView: View {
     @EnvironmentObject private var services: ToolkitServices
@@ -37,6 +38,10 @@ struct CameraView: View {
                     ForEach(modes, id: \.self) { Text($0).tag($0) }
                 }
                 .pickerStyle(.segmented)
+                .onChange(of: analysisMode) { _, newValue in
+                    camera.analysisMode = newValue
+                    services.log("Camera analysis mode changed to \(newValue)")
+                }
 
                 ZStack {
                     if permissionStatus == .authorized {
@@ -84,13 +89,55 @@ struct CameraView: View {
                     }
                 }
 
+                if !camera.detectedText.isEmpty {
+                    SectionLabel(title: "Detected Text")
+                    GlassPanel {
+                        Text(camera.detectedText)
+                            .font(.system(.caption, design: .monospaced))
+                            .textSelection(.enabled)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+
+                if !camera.detectedFaces.isEmpty {
+                    SectionLabel(title: "Detected Faces")
+                    GlassPanel {
+                        VStack(alignment: .leading, spacing: 8) {
+                            ForEach(camera.detectedFaces, id: \.self) { face in
+                                Text(face)
+                                    .font(.caption)
+                                    .foregroundStyle(AppTheme.secondaryText)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+
+                if !camera.capturedPhotoSummary.isEmpty {
+                    SectionLabel(title: "Last Capture")
+                    GlassPanel {
+                        Text(camera.capturedPhotoSummary)
+                            .font(.system(.caption, design: .monospaced))
+                            .textSelection(.enabled)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+
                 SectionLabel(title: "Vision Tools")
                 GlassPanel {
-                    VStack(spacing: 0) {
-                        tool("QR / Barcode", "Vision barcode request", "qrcode.viewfinder")
-                        tool("OCR", "Recognize text in frames or images", "text.viewfinder")
-                        tool("Faces", "Detect face rectangles and landmarks", "face.smiling")
-                        tool("Document Scan", "VisionKit document scanner", "doc.viewfinder")
+                    VStack(alignment: .leading, spacing: 10) {
+                        Button {
+                            camera.capturePhoto()
+                            services.log("Photo capture requested")
+                        } label: {
+                            Label("Capture Photo Metadata", systemImage: "camera.fill")
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(!camera.isRunning)
+                        tool("QR / Barcode", "Live metadata scanner", "qrcode.viewfinder")
+                        tool("OCR", "Live text recognition from frames", "text.viewfinder")
+                        tool("Faces", "Live face rectangle detection", "face.smiling")
+                        tool("Metadata", "Photo size and metadata keys on capture", "info.circle")
                     }
                 }
             }
@@ -125,6 +172,7 @@ struct CameraView: View {
 
     private func startCamera() {
         camera.configureIfNeeded()
+        camera.analysisMode = analysisMode
         camera.start()
         services.log("Camera preview started")
     }
@@ -149,14 +197,21 @@ struct CameraView: View {
     }
 }
 
-final class CameraPreviewModel: NSObject, ObservableObject, AVCaptureMetadataOutputObjectsDelegate {
+final class CameraPreviewModel: NSObject, ObservableObject, AVCaptureMetadataOutputObjectsDelegate, AVCaptureVideoDataOutputSampleBufferDelegate, AVCapturePhotoCaptureDelegate {
     let session = AVCaptureSession()
     @Published private(set) var isRunning = false
     @Published private(set) var errorMessage: String?
     @Published private(set) var detectedCodes: [String] = []
+    @Published private(set) var detectedText = ""
+    @Published private(set) var detectedFaces: [String] = []
+    @Published private(set) var capturedPhotoSummary = ""
+    var analysisMode = "QR / Barcode"
 
     private let queue = DispatchQueue(label: "ToolkitCameraSession")
+    private let videoQueue = DispatchQueue(label: "ToolkitCameraVision")
+    private let photoOutput = AVCapturePhotoOutput()
     private var configured = false
+    private var lastVisionAnalysis = Date.distantPast
 
     func configureIfNeeded() {
         guard !configured else { return }
@@ -186,6 +241,15 @@ final class CameraPreviewModel: NSObject, ObservableObject, AVCaptureMetadataOut
                         [.qr, .ean8, .ean13, .code128, .pdf417, .aztec, .dataMatrix].contains($0)
                     }
                 }
+                if self.session.canAddOutput(self.photoOutput) {
+                    self.session.addOutput(self.photoOutput)
+                }
+                let videoOutput = AVCaptureVideoDataOutput()
+                videoOutput.alwaysDiscardsLateVideoFrames = true
+                videoOutput.setSampleBufferDelegate(self, queue: self.videoQueue)
+                if self.session.canAddOutput(videoOutput) {
+                    self.session.addOutput(videoOutput)
+                }
                 self.configured = true
             } catch {
                 DispatchQueue.main.async { self.errorMessage = error.localizedDescription }
@@ -209,6 +273,14 @@ final class CameraPreviewModel: NSObject, ObservableObject, AVCaptureMetadataOut
         }
     }
 
+    func capturePhoto() {
+        queue.async {
+            guard self.configured else { return }
+            let settings = AVCapturePhotoSettings()
+            self.photoOutput.capturePhoto(with: settings, delegate: self)
+        }
+    }
+
     func metadataOutput(
         _ output: AVCaptureMetadataOutput,
         didOutput metadataObjects: [AVMetadataObject],
@@ -220,6 +292,63 @@ final class CameraPreviewModel: NSObject, ObservableObject, AVCaptureMetadataOut
         }
         if !codes.isEmpty {
             detectedCodes = Array(Set(codes)).sorted()
+        }
+    }
+
+    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        guard ["OCR", "Faces"].contains(analysisMode) else { return }
+        guard Date().timeIntervalSince(lastVisionAnalysis) > 0.8 else { return }
+        lastVisionAnalysis = Date()
+        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+        let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: .right, options: [:])
+
+        if analysisMode == "OCR" {
+            let request = VNRecognizeTextRequest { [weak self] request, error in
+                let lines = (request.results as? [VNRecognizedTextObservation])?
+                    .compactMap { $0.topCandidates(1).first?.string } ?? []
+                DispatchQueue.main.async {
+                    if let error {
+                        self?.errorMessage = error.localizedDescription
+                    } else if !lines.isEmpty {
+                        self?.detectedText = lines.prefix(12).joined(separator: "\n")
+                    }
+                }
+            }
+            request.recognitionLevel = .fast
+            try? handler.perform([request])
+        } else if analysisMode == "Faces" {
+            let request = VNDetectFaceRectanglesRequest { [weak self] request, error in
+                let faces = (request.results as? [VNFaceObservation]) ?? []
+                DispatchQueue.main.async {
+                    if let error {
+                        self?.errorMessage = error.localizedDescription
+                    } else {
+                        self?.detectedFaces = faces.enumerated().map { index, face in
+                            let box = face.boundingBox
+                            return String(format: "Face %d  x %.2f  y %.2f  w %.2f  h %.2f", index + 1, box.origin.x, box.origin.y, box.width, box.height)
+                        }
+                    }
+                }
+            }
+            try? handler.perform([request])
+        }
+    }
+
+    func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
+        if let error {
+            DispatchQueue.main.async { self.errorMessage = error.localizedDescription }
+            return
+        }
+        let data = photo.fileDataRepresentation() ?? Data()
+        let image = UIImage(data: data)
+        let size = image.map { "\(Int($0.size.width)) x \(Int($0.size.height)) px" } ?? "Unknown size"
+        let metadataKeys = photo.metadata.keys.sorted().joined(separator: ", ")
+        DispatchQueue.main.async {
+            self.capturedPhotoSummary = """
+            Size: \(size)
+            Bytes: \(data.count)
+            Metadata keys: \(metadataKeys)
+            """
         }
     }
 }

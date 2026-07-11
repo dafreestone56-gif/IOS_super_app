@@ -137,6 +137,14 @@ struct SensorMetric: Identifiable {
     let trend: [Double]
 }
 
+struct SensorLogSample: Identifiable, Codable, Hashable {
+    var id = UUID()
+    let date: Date
+    let sensor: String
+    let value: Double
+    let detail: String
+}
+
 struct BLEDevice: Identifiable, Codable, Hashable {
     let id: UUID
     var name: String
@@ -166,6 +174,107 @@ struct NFCScanResult: Identifiable, Codable, Hashable {
     let title: String
     let payload: String
     let detail: String
+}
+
+struct ToolHistoryItem: Identifiable, Codable, Hashable {
+    var id = UUID()
+    let date: Date
+    let toolName: String
+    let inputPreview: String
+    let outputPreview: String
+}
+
+struct NetworkHistoryItem: Identifiable, Codable, Hashable {
+    var id = UUID()
+    let date: Date
+    let title: String
+    let request: String
+    let response: String
+    let durationMilliseconds: Int
+}
+
+struct BonjourServiceInfo: Identifiable, Hashable {
+    var id: String { "\(name)-\(type)-\(domain)" }
+    let name: String
+    let type: String
+    let domain: String
+    let hostName: String
+    let port: Int
+}
+
+struct WidgetDraftComponent: Identifiable, Codable, Hashable {
+    var id = UUID()
+    var kind: String
+    var binding: String
+    var title: String
+}
+
+struct WidgetDraft: Identifiable, Codable, Hashable {
+    var id = UUID()
+    var name: String
+    var theme: String
+    var background: String
+    var accent: String = "Blue"
+    var cornerRadius: Double
+    var components: [WidgetDraftComponent]
+    var updatedAt: Date
+
+    init(
+        id: UUID = UUID(),
+        name: String,
+        theme: String,
+        background: String,
+        accent: String = "Blue",
+        cornerRadius: Double,
+        components: [WidgetDraftComponent],
+        updatedAt: Date
+    ) {
+        self.id = id
+        self.name = name
+        self.theme = theme
+        self.background = background
+        self.accent = accent
+        self.cornerRadius = cornerRadius
+        self.components = components
+        self.updatedAt = updatedAt
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case theme
+        case background
+        case accent
+        case cornerRadius
+        case components
+        case updatedAt
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        name = try container.decode(String.self, forKey: .name)
+        theme = try container.decode(String.self, forKey: .theme)
+        background = try container.decode(String.self, forKey: .background)
+        accent = try container.decodeIfPresent(String.self, forKey: .accent) ?? "Blue"
+        cornerRadius = try container.decode(Double.self, forKey: .cornerRadius)
+        components = try container.decode([WidgetDraftComponent].self, forKey: .components)
+        updatedAt = try container.decode(Date.self, forKey: .updatedAt)
+    }
+}
+
+struct HapticStep: Identifiable, Codable, Hashable {
+    var id = UUID()
+    var delay: Double
+    var intensity: Double
+    var sharpness: Double
+}
+
+struct SavedHapticSequence: Identifiable, Codable, Hashable {
+    var id = UUID()
+    var name: String
+    var steps: [HapticStep]
+    var updatedAt: Date
 }
 
 struct AutomationRule: Identifiable, Codable, Hashable {
@@ -215,20 +324,57 @@ struct LogEntry: Identifiable, Hashable {
 }
 
 enum DeveloperToolKind: String, CaseIterable, Identifiable {
+    case validateJSON = "Validate JSON"
     case formatJSON = "Format JSON"
     case minifyJSON = "Minify JSON"
+    case jsonKeys = "JSON Top-Level Keys"
+    case csvToJSON = "CSV to JSON"
     case base64Encode = "Base64 Encode"
     case base64Decode = "Base64 Decode"
+    case base64URLEncode = "Base64URL Encode"
+    case base64URLDecode = "Base64URL Decode"
+    case hexEncode = "Hex Encode"
+    case hexDecode = "Hex Decode"
     case sha256 = "SHA-256"
+    case sha1 = "SHA-1"
+    case md5 = "MD5"
+    case hmacSHA256 = "HMAC SHA-256"
+    case urlParse = "Parse URL"
     case urlEncode = "URL Encode"
     case urlDecode = "URL Decode"
     case uuid = "Generate UUID"
     case jwtDecode = "Decode JWT"
     case regex = "Regex Matches"
     case colorHexToRGB = "Hex Color to RGB"
+    case colorContrast = "Color Contrast"
+    case textDiff = "Text Diff"
     case timestamp = "Unix Timestamp"
 
     var id: String { rawValue }
+
+    var needsAuxiliaryInput: Bool {
+        switch self {
+        case .regex, .hmacSHA256, .colorContrast, .textDiff:
+            true
+        default:
+            false
+        }
+    }
+
+    var auxiliaryPlaceholder: String {
+        switch self {
+        case .regex:
+            "Regex pattern"
+        case .hmacSHA256:
+            "Secret key"
+        case .colorContrast:
+            "Second hex color"
+        case .textDiff:
+            "Comparison text"
+        default:
+            "Options"
+        }
+    }
 }
 
 enum TerminalMode: String, CaseIterable, Identifiable, Codable {

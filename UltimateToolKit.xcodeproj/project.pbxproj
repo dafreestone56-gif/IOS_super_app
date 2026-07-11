@@ -28,6 +28,8 @@
 		001000000000000000000013 /* AudioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 002000000000000000000016 /* AudioView.swift */; };
 		001000000000000000000014 /* HapticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 002000000000000000000017 /* HapticsView.swift */; };
 		001000000000000000000015 /* AIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 002000000000000000000018 /* AIView.swift */; };
+		001000000000000000000016 /* ToolkitWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 002000000000000000000020 /* ToolkitWidget.swift */; };
+		001000000000000000000017 /* UltimateToolKitWidgets.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 002000000000000000000022 /* UltimateToolKitWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -38,7 +40,28 @@
 			remoteGlobalIDString = 005000000000000000000001;
 			remoteInfo = UltimateToolKit;
 		};
+		003000000000000000000002 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 004000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 005000000000000000000003;
+			remoteInfo = UltimateToolKitWidgets;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		00C000000000000000000001 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				001000000000000000000017 /* UltimateToolKitWidgets.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		002000000000000000000001 /* UltimateToolKitApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/UltimateToolKitApp.swift; sourceTree = "<group>"; };
@@ -66,6 +89,9 @@
 		002000000000000000000017 /* HapticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Haptics/HapticsView.swift; sourceTree = "<group>"; };
 		002000000000000000000018 /* AIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/AI/AIView.swift; sourceTree = "<group>"; };
 		002000000000000000000019 /* UltimateToolKit.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = UltimateToolKit.entitlements; sourceTree = "<group>"; };
+		002000000000000000000020 /* ToolkitWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolkitWidget.swift; sourceTree = "<group>"; };
+		002000000000000000000021 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		002000000000000000000022 /* UltimateToolKitWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = UltimateToolKitWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -83,6 +109,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		006000000000000000000003 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -90,6 +123,7 @@
 			isa = PBXGroup;
 			children = (
 				007000000000000000000002 /* UltimateToolKit */,
+				007000000000000000000005 /* UltimateToolKitWidgets */,
 				007000000000000000000003 /* UltimateToolKitTests */,
 				007000000000000000000004 /* Products */,
 			);
@@ -132,11 +166,21 @@
 			path = UltimateToolKitTests;
 			sourceTree = "<group>";
 		};
+		007000000000000000000005 /* UltimateToolKitWidgets */ = {
+			isa = PBXGroup;
+			children = (
+				002000000000000000000020 /* ToolkitWidget.swift */,
+				002000000000000000000021 /* Info.plist */,
+			);
+			path = UltimateToolKitWidgets;
+			sourceTree = "<group>";
+		};
 		007000000000000000000004 /* Products */ = {
 			isa = PBXGroup;
 			children = (
 				002000000000000000000013 /* UltimateToolKit.app */,
 				002000000000000000000014 /* UltimateToolKitTests.xctest */,
+				002000000000000000000022 /* UltimateToolKitWidgets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -151,10 +195,12 @@
 				009000000000000000000001 /* Sources */,
 				006000000000000000000001 /* Frameworks */,
 				009000000000000000000002 /* Resources */,
+				00C000000000000000000001 /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				00A000000000000000000002 /* PBXTargetDependency */,
 			);
 			name = UltimateToolKit;
 			productName = UltimateToolKit;
@@ -178,6 +224,23 @@
 			productReference = 002000000000000000000014 /* UltimateToolKitTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		005000000000000000000003 /* UltimateToolKitWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 008000000000000000000004 /* Build configuration list for PBXNativeTarget "UltimateToolKitWidgets" */;
+			buildPhases = (
+				009000000000000000000004 /* Sources */,
+				006000000000000000000003 /* Frameworks */,
+				009000000000000000000005 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = UltimateToolKitWidgets;
+			productName = UltimateToolKitWidgets;
+			productReference = 002000000000000000000022 /* UltimateToolKitWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -194,6 +257,9 @@
 					005000000000000000000002 = {
 						CreatedOnToolsVersion = 16.0;
 						TestTargetID = 005000000000000000000001;
+					};
+					005000000000000000000003 = {
+						CreatedOnToolsVersion = 16.0;
 					};
 				};
 			};
@@ -212,6 +278,7 @@
 			targets = (
 				005000000000000000000001 /* UltimateToolKit */,
 				005000000000000000000002 /* UltimateToolKitTests */,
+				005000000000000000000003 /* UltimateToolKitWidgets */,
 			);
 		};
 /* End PBXProject section */
@@ -222,6 +289,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				001000000000000000000010 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		009000000000000000000005 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -262,6 +336,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		009000000000000000000004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				001000000000000000000016 /* ToolkitWidget.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -269,6 +351,11 @@
 			isa = PBXTargetDependency;
 			target = 005000000000000000000001 /* UltimateToolKit */;
 			targetProxy = 003000000000000000000001 /* PBXContainerItemProxy */;
+		};
+		00A000000000000000000002 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 005000000000000000000003 /* UltimateToolKitWidgets */;
+			targetProxy = 003000000000000000000002 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -475,6 +562,58 @@
 			};
 			name = Release;
 		};
+		00B000000000000000000007 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = UltimateToolKitWidgets/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.personal.playgroundtoolkit.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		00B000000000000000000008 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = UltimateToolKitWidgets/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.personal.playgroundtoolkit.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -501,6 +640,15 @@
 			buildConfigurations = (
 				00B000000000000000000005 /* Debug */,
 				00B000000000000000000006 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		008000000000000000000004 /* Build configuration list for PBXNativeTarget "UltimateToolKitWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				00B000000000000000000007 /* Debug */,
+				00B000000000000000000008 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

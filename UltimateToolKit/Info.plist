@@ -20,6 +20,17 @@
 	<string>0.1.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.personal.playgroundtoolkit</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>ultimatetoolkit</string>
+			</array>
+		</dict>
+	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSBluetoothAlwaysUsageDescription</key>
@@ -30,6 +41,15 @@
 	<string>Face ID can protect sensitive developer tools and stored secrets.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Local network access supports diagnostics, Bonjour discovery, HTTP clients, and automation triggers.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_http._tcp</string>
+		<string>_https._tcp</string>
+		<string>_ssh._tcp</string>
+		<string>_workstation._tcp</string>
+		<string>_ipp._tcp</string>
+		<string>_services._dns-sd._udp</string>
+	</array>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Location enables geofence automations, heading, compass, and network context when you choose those tools.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
@@ -44,6 +64,12 @@
 	<string>Speech recognition is used to transcribe audio when you choose speech tools.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>bluetooth-central</string>
+		<string>audio</string>
+		<string>fetch</string>
+	</array>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UIRequiredDeviceCapabilities</key>

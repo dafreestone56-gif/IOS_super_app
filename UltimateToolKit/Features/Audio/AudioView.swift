@@ -19,6 +19,10 @@ struct AudioView: View {
                                 .font(.caption)
                                 .foregroundStyle(AppTheme.secondaryText)
                         }
+                        Text("Input: \(services.audio.inputDescription)")
+                            .font(.caption)
+                            .foregroundStyle(AppTheme.secondaryText)
+                            .lineLimit(2)
                         if services.audio.levels.isEmpty {
                             Text("Start monitoring to show microphone levels.")
                                 .font(.caption)
@@ -32,6 +36,14 @@ struct AudioView: View {
                                 .padding(10)
                                 .background(Color.black.opacity(0.42), in: RoundedRectangle(cornerRadius: 8))
                         }
+                        HStack {
+                            Text("Level")
+                                .foregroundStyle(AppTheme.secondaryText)
+                            Spacer()
+                            Text(String(format: "%.1f dBFS", services.audio.currentDecibels))
+                                .foregroundStyle(.indigo)
+                        }
+                        .font(.caption)
                         Text("Microphone permission: \(services.audio.permissionStatus)")
                             .font(.caption)
                             .foregroundStyle(AppTheme.secondaryText)
@@ -56,6 +68,23 @@ struct AudioView: View {
                     .buttonStyle(.borderedProminent)
                 }
 
+                SectionLabel(title: "Recorder")
+                GlassPanel {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text(services.audio.lastRecordingName)
+                            .font(.caption)
+                            .foregroundStyle(AppTheme.secondaryText)
+                        Button {
+                            let result = services.audio.playLastRecording()
+                            services.log(result)
+                        } label: {
+                            Label("Play Last Recording", systemImage: "play.circle")
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
                 SectionLabel(title: "Speech")
                 GlassPanel {
                     VStack(alignment: .leading, spacing: 10) {
@@ -77,7 +106,7 @@ struct AudioView: View {
                     VStack(spacing: 0) {
                         tool("Waveform", "Live microphone level metering", "waveform")
                         tool("Spectrum", "FFT analyzer is prepared as the next audio layer", "chart.bar.xaxis")
-                        tool("Recorder", "Recording foundation uses AVAudioRecorder", "record.circle")
+                        tool("Recorder", "Records CAF files into app documents", "record.circle")
                         tool("Speech to Text", "Speech framework hook is documented for device QA", "text.bubble")
                     }
                 }

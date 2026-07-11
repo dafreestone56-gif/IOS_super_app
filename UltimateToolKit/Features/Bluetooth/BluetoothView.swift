@@ -4,6 +4,21 @@ struct BluetoothView: View {
     @EnvironmentObject private var services: ToolkitServices
     @State private var mode: TerminalMode = .ascii
     @State private var terminalInput = ""
+    @State private var searchText = ""
+    @State private var minimumRSSI = -100.0
+    @State private var savedOnly = false
+
+    private var filteredDevices: [BLEDevice] {
+        services.bluetooth.devices.filter { device in
+            let matchesSearch = searchText.isEmpty
+                || device.name.localizedCaseInsensitiveContains(searchText)
+                || device.address.localizedCaseInsensitiveContains(searchText)
+                || device.advertisement.localizedCaseInsensitiveContains(searchText)
+            let matchesRSSI = Double(device.rssi) >= minimumRSSI
+            let matchesSaved = !savedOnly || services.bluetooth.isSaved(device)
+            return matchesSearch && matchesRSSI && matchesSaved
+        }
+    }
 
     var body: some View {
         ScrollView {
@@ -56,20 +71,46 @@ struct BluetoothView: View {
                     }
                 }
 
+                GlassPanel {
+                    VStack(alignment: .leading, spacing: 10) {
+                        TextField("Filter by name, UUID, or advertisement", text: $searchText)
+                            .textInputAutocapitalization(.never)
+                            .padding(10)
+                            .background(AppTheme.elevatedPanel, in: RoundedRectangle(cornerRadius: 8))
+                        HStack {
+                            Text("Min RSSI")
+                            Spacer()
+                            Text("\(Int(minimumRSSI)) dBm")
+                                .foregroundStyle(AppTheme.secondaryText)
+                        }
+                        Slider(value: $minimumRSSI, in: -100 ... -20, step: 1)
+                        Toggle("Saved only", isOn: $savedOnly)
+                    }
+                }
+
                 SectionLabel(title: "Available Devices")
                 GlassPanel {
                     VStack(spacing: 0) {
-                        if services.bluetooth.devices.isEmpty {
+                        if filteredDevices.isEmpty {
                             emptyState("No peripherals discovered yet. Start a scan near a BLE device.")
                         } else {
-                            ForEach(services.bluetooth.devices) { device in
-                                Button {
-                                    services.bluetooth.connect(to: device)
-                                    services.log("Connecting to \(device.name)")
-                                } label: {
-                                    deviceRow(device)
+                            ForEach(filteredDevices) { device in
+                                HStack {
+                                    Button {
+                                        services.bluetooth.connect(to: device)
+                                        services.log("Connecting to \(device.name)")
+                                    } label: {
+                                        deviceRow(device)
+                                    }
+                                    .buttonStyle(.plain)
+                                    Button {
+                                        services.bluetooth.toggleSaved(device)
+                                        services.log("BLE saved state toggled for \(device.name)")
+                                    } label: {
+                                        Image(systemName: services.bluetooth.isSaved(device) ? "star.fill" : "star")
+                                    }
+                                    .buttonStyle(.bordered)
                                 }
-                                .buttonStyle(.plain)
                                 Divider().background(AppTheme.hairline)
                             }
                         }
@@ -133,6 +174,15 @@ struct BluetoothView: View {
                     }
                 }
                 .pickerStyle(.segmented)
+
+                if !services.bluetooth.terminalLines.isEmpty {
+                    Button {
+                        services.log(services.bluetooth.exportTerminalLog())
+                    } label: {
+                        Label("Log Terminal Export", systemImage: "square.and.arrow.up")
+                    }
+                    .buttonStyle(.bordered)
+                }
             }
             .padding(16)
         }

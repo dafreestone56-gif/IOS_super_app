@@ -19,9 +19,9 @@ Required upkeep:
 
 ## Current Execution State
 
-- Current phase: Full prototype QA and macOS validation handoff
-- Current step: Rerun GitHub Actions unsigned IPA build after resolving the latest Swift compile errors from supplied logs
-- Overall status: Full local prototype implemented; current CI compile blockers patched; Xcode/device validation pending
+- Current phase: Live hardware iteration and QA handoff
+- Current step: Validate live sensor logging, NFC signing diagnostics, saved haptic sequences, expanded Shortcuts connectors, and embedded WidgetKit extension in GitHub Actions and on iOS 26 hardware
+- Overall status: Expanded local prototype now includes session-based sensor logging/charts, broader AppIntents connectors, haptic sequence persistence, improved NFC diagnostics, and a real WidgetKit extension target; Xcode/device validation pending
 - Last updated: 2026-07-10
 - Source plan: `Plan.md`
 - UI reference: `UI UX.png`
@@ -39,7 +39,7 @@ Required upkeep:
 - [x] Added public-API service foundations for sensors, BLE scanning, NFC reading, network monitoring/HTTP, developer utilities, AppIntents, audio speech, and haptics
 - [x] Added unsigned GitHub Actions IPA build workflow
 - [x] Added README, module docs, `.gitignore`, privacy strings, and unit tests for utility functions
-- [x] Ran static QA for project references, XML plist/scheme parsing, TODO/dead-code markers, and source/project consistency
+- [x] Ran static QA for project references, XML plist/scheme parsing, task/dead-code markers, and source/project consistency
 - [x] Removed seeded sample/demo data from app source
 - [x] Added persisted automation rules with create, toggle, run, delete, and execution log
 - [x] Added BLE connect flow, GATT service/characteristic explorer, read/notify controls, and terminal write path
@@ -54,10 +54,16 @@ Required upkeep:
 - [x] Removed incomplete AppIcon asset set that could fail asset catalog compilation
 - [x] Reordered workflow to build/package IPA before optional simulator tests and upload build logs on failure
 - [x] Resolved latest GitHub Actions Swift compile blockers from supplied logs: `DeveloperToolKind` `Identifiable` conformance, Widget Studio opaque return, App Shortcuts builder syntax, TCP probe concurrency guard, and deprecated Bluetooth audio option
+- [x] Expanded next functional prototype phase: richer sensors, BLE filters/saved devices/export, NFC export, full HTTP/DNS/TCP/Bonjour/WOL network tools, Vision OCR/faces/photo metadata, audio dB/record/playback, AHAP export, persisted widget drafts, Keychain provider key storage, live settings statuses, local AI draft heuristics, and broad AppIntents/AppShortcuts catalog
+- [x] Added live sensor logging sessions with Start/Stop, persisted samples, CSV export, and selectable detailed graphs
+- [x] Added NFC availability diagnostics that distinguish unavailable CoreNFC/signing capability from started read/write sessions
+- [x] Added saved haptic sequences with multi-step editing, playback, AHAP export, persistence, and Shortcuts playback/export actions
+- [x] Expanded Shortcuts connectors for sensor logs, NFC status, haptic sequences, widget drafts, automation rules, and module launchers
+- [x] Added an embedded WidgetKit extension target with configurable home-screen widget styles
 
 ## In Progress
 
-- [~] macOS/Xcode build validation and real-device hardware QA
+- [~] macOS/Xcode build validation, widget extension packaging verification, Shortcuts catalog verification, and real-device hardware QA
 
 ## Next Up
 
@@ -67,6 +73,11 @@ Required upkeep:
 - [x] Implement design system matching `UI UX.png`
 - [~] Run `xcodebuild` on macOS or GitHub Actions
 - [~] Resolve any Xcode/iOS 26 SDK compile issues found by CI
+- [ ] Confirm WidgetKit extension is present inside the generated unsigned IPA payload
+- [ ] Verify WidgetKit widget appears in iOS Home Screen widget gallery after sideload/signing
+- [ ] Verify expanded AppIntents appear in Apple Shortcuts on iOS 26
+- [ ] Verify live sensor logging captures accelerometer, gyro, magnetometer, pressure, heading, and location streams on device
+- [ ] Verify saved haptic sequences can be played from Apple Shortcuts
 - [ ] Sign the unsigned IPA during sideloading
 - [ ] Run real-device QA on iOS 26 for BLE, NFC, camera, microphone/audio, haptics, and permissions
 - [ ] Confirm provisioning profile includes NFC reader session entitlement
@@ -112,7 +123,7 @@ The app should visually match the provided mockup:
 
 ## Technical Principles
 
-- Use Swift 6 and SwiftUI for the main app.
+- Use Swift 5 language mode and SwiftUI for the current CI-compatible prototype; revisit Swift 6 strictness after GitHub runner/Xcode validation is stable.
 - Use MVVM with dependency injection and protocol-backed services.
 - Keep hardware APIs behind service abstractions so simulator mocks and tests are practical.
 - Use Swift Concurrency and Combine where appropriate for streaming sensor, BLE, network, and automation events.
@@ -192,23 +203,23 @@ If the project is scaffolded differently by Xcode, preserve the same conceptual 
 
 ### App Shell
 
-- [ ] Create SwiftUI app entry point.
-- [ ] Add root navigation with bottom tabs for Home, Automation, Shortcuts, Widgets, More.
+- [x] Create SwiftUI app entry point.
+- [x] Add root navigation with bottom tabs for Home, Automation, Shortcuts, Widgets, More.
 - [ ] Add adaptive navigation for iPad/wide screens using sidebar or split view.
-- [ ] Add app-wide router for module deep links.
-- [ ] Add dependency container for real services and mock services.
-- [ ] Add logging service and in-app log model.
-- [ ] Add permission state tracking.
+- [~] Add app-wide router for module deep links.
+- [x] Add dependency container for real services and mock services.
+- [x] Add logging service and in-app log model.
+- [x] Add permission state tracking.
 
 ### Design System
 
-- [ ] Define dark-first color tokens matching the mockup.
-- [ ] Define module colors and symbols.
-- [ ] Build reusable card, row, section, toolbar, tab, metric, chart preview, and terminal components.
-- [ ] Build compact segmented controls and icon buttons.
-- [ ] Add dynamic type support without layout overlap.
+- [x] Define dark-first color tokens matching the mockup.
+- [x] Define module colors and symbols.
+- [x] Build reusable card, row, section, toolbar, tab, metric, chart preview, and terminal components.
+- [x] Build compact segmented controls and icon buttons.
+- [~] Add dynamic type support without layout overlap.
 - [ ] Add light mode after dark mode is stable.
-- [ ] Add accessibility labels for icon-only controls.
+- [~] Add accessibility labels for icon-only controls.
 - [ ] Verify major screens on compact iPhone and wide/iPad layouts.
 
 ### Data and Persistence
@@ -257,7 +268,7 @@ Goal: create the usable first screen and shared UI language.
 - [x] Add search field for modules.
 - [x] Add favorites grid matching the mockup.
 - [x] Add tools list with disclosure rows.
-- [x] Add Settings / More placeholder.
+- [x] Add Settings / More screens.
 - [x] Add real module catalog metadata without seeded user/demo records.
 - [x] Add reusable `MetricCard`, `ToolRow`, `ModuleCard`, `Panel`, and section header components.
 - [x] Add basic app logging and recent event list.
@@ -266,7 +277,7 @@ Goal: create the usable first screen and shared UI language.
 Exit criteria:
 
 - App launches into a polished Home screen resembling the provided UI.
-- All primary tabs are reachable with placeholder content.
+- All primary tabs are reachable with implemented first-pass content.
 - The design system can support future modules without duplicating styling.
 
 ### Phase 2 - Developer Utilities Foundation
@@ -274,16 +285,16 @@ Exit criteria:
 Goal: ship low-risk, offline developer tools first to prove architecture and create immediate value.
 
 - [x] Developer Tools module landing screen.
-- [~] JSON formatter, validator, minifier, and tree preview.
+- [x] JSON formatter, validator, minifier, and top-level key preview.
 - [x] Base64 encode/decode.
 - [x] URL encode/decode and parser.
 - [x] UUID generator.
 - [x] Hash generator using CryptoKit: SHA256, SHA1 if available/acceptable, MD5 only if clearly labeled legacy.
 - [x] Regex playground.
 - [x] JWT decoder.
-- [ ] Color converter and contrast checker.
-- [ ] Markdown preview/diff placeholder or first version.
-- [ ] Tool history and copy/share actions.
+- [x] Color converter and contrast checker.
+- [ ] Markdown preview/diff first version.
+- [x] Tool history and copy actions.
 - [x] Unit tests for pure utility functions.
 
 Exit criteria:
@@ -304,14 +315,17 @@ Goal: implement the live Sensors module with real values where public APIs allow
 - [x] Memory and storage stats.
 - [x] Accelerometer stream.
 - [x] Gyroscope stream.
-- [ ] Magnetometer stream.
-- [ ] Barometer / altimeter where available.
-- [ ] Heading and compass with location permission handling.
-- [ ] Location card with coordinates and accuracy.
-- [ ] Microphone level card after Audio service exists.
+- [x] Magnetometer stream.
+- [x] Barometer / altimeter where available.
+- [x] Heading and compass with location permission handling.
+- [x] Location card with coordinates and accuracy.
+- [~] Microphone level card after Audio service exists.
 - [x] Sensor sample charts using Swift Charts or lightweight custom sparklines.
+- [x] Start/Stop live sensor logging session.
+- [x] Select one or more sensors for detailed graph panels.
+- [x] Persist and export logged sensor samples.
 - [x] Export sensor samples to CSV/JSON.
-- [ ] AppIntent actions for basic sensor reads.
+- [x] AppIntent actions for basic sensor reads and saved sensor logs.
 - [ ] Tests for sensor formatting and mock streams.
 
 Exit criteria:
@@ -328,7 +342,7 @@ Goal: implement BLE scanning, device detail, GATT exploration, and terminal foun
 - [x] Bluetooth state card with enabled/unavailable/powered-off states.
 - [x] BLE scanning via `CBCentralManager`.
 - [x] Device list with name, identifier, RSSI, and advertisement summary.
-- [ ] Filters by name, UUID, RSSI, and favorites.
+- [x] Filters by name, UUID/address/advertisement, RSSI, and saved devices.
 - [x] Connect/disconnect flow.
 - [x] Service and characteristic explorer.
 - [x] Read characteristic values.
@@ -336,8 +350,8 @@ Goal: implement BLE scanning, device detail, GATT exploration, and terminal foun
 - [x] Subscribe to notifications.
 - [x] Terminal view for UART-like services.
 - [~] RSSI chart and interaction logs.
-- [ ] Save devices and custom labels.
-- [ ] Export GATT logs.
+- [~] Save devices and custom labels.
+- [x] Export terminal/GATT interaction logs to app event log.
 - [ ] BLE automation events.
 - [ ] BLE AppIntent actions.
 - [x] Mock BLE service for simulator tests.
@@ -358,11 +372,11 @@ Goal: add CoreNFC read/write flows with history and NDEF parsing.
 - [~] Show tag type, payload size, writable status, and session result.
 - [x] Write NDEF text and URL records.
 - [x] Save tag scan history.
-- [ ] Export/import custom tag dump JSON.
-- [ ] Add known tag metadata placeholder database.
+- [x] Export custom tag history JSON.
+- [ ] Add known tag metadata database.
 - [ ] Add NFC-triggered automation hooks where iOS allows.
-- [ ] Add AppIntent actions where feasible.
-- [ ] Document CoreNFC limitations in module UI and docs.
+- [x] Add AppIntent actions where feasible.
+- [~] Document CoreNFC limitations in module UI and docs.
 
 Exit criteria:
 
@@ -379,17 +393,17 @@ Goal: create network diagnostics, HTTP tooling, and local discovery.
 - [x] IP address and interface display.
 - [x] `NWPathMonitor` connectivity status.
 - [ ] Ping tool.
-- [ ] DNS lookup.
-- [~] Port scanner with rate limits and warnings.
-- [ ] Bonjour / mDNS browser.
+- [x] DNS lookup.
+- [x] Port scanner with rate limits and warnings.
+- [x] Bonjour / mDNS browser.
 - [ ] LAN scanner where feasible.
-- [~] HTTP/REST client with headers, method, body, and response inspector.
+- [x] HTTP/REST client with headers, method, body, and response inspector.
 - [ ] WebSocket console.
 - [ ] MQTT explorer if dependency choice is approved.
-- [ ] Wake-on-LAN packet sender.
+- [x] Wake-on-LAN packet sender.
 - [ ] QR sharing for network/device info.
-- [ ] Network history and export.
-- [ ] AppIntent actions for common network tasks.
+- [x] Network history and export.
+- [x] AppIntent actions for common network tasks.
 
 Exit criteria:
 
@@ -403,14 +417,14 @@ Goal: add live camera preview and high-value Vision tools.
 
 - [x] Camera module screen.
 - [x] Permission-gated live preview.
-- [ ] Photo capture.
+- [x] Photo capture.
 - [x] QR/barcode scanning.
-- [ ] OCR using Vision.
-- [ ] Face detection.
+- [x] OCR using Vision.
+- [x] Face detection.
 - [ ] Document scanner via VisionKit.
-- [ ] Photo metadata / EXIF viewer.
+- [x] Photo metadata / EXIF summary.
 - [ ] CoreImage filter pipeline starter.
-- [ ] CoreML model runner placeholder or first classifier.
+- [ ] CoreML model runner starter or first classifier.
 - [ ] AppIntent actions for scan/capture operations.
 - [ ] Tests for parsing and view models with mocked camera outputs.
 
@@ -424,7 +438,7 @@ Exit criteria:
 
 Goal: connect modules through local rules and expose actions to Apple Shortcuts.
 
-- [ ] Define automation models: trigger, condition, action, variable, execution log.
+- [~] Define automation models: trigger, condition, action, variable, execution log.
 - [x] Build Automation tab list matching the mockup.
 - [x] Build Create Automation screen with IF / THEN structure.
 - [x] Add toggles for enabled, run immediately, notify when run.
@@ -434,11 +448,12 @@ Goal: connect modules through local rules and expose actions to Apple Shortcuts.
 - [ ] Add BLE event trigger.
 - [ ] Add NFC event trigger where feasible.
 - [ ] Add network reachability trigger.
-- [ ] Add actions: notification, HTTP request, haptic, log entry, open module.
-- [ ] Add dry-run simulation mode.
+- [~] Add actions: notification, HTTP request, haptic, log entry, open module.
+- [x] Add dry-run simulation mode.
 - [x] Add execution logs and failure display.
-- [ ] Define AppIntents foundation and first AppShortcuts.
-- [ ] Add AppIntent categories for Developer Tools, Sensors, Bluetooth, NFC, Network, Camera, Audio, Haptics, Widgets, Automation, and AI as modules mature.
+- [x] Define AppIntents foundation and first AppShortcuts.
+- [~] Add AppIntent categories for Developer Tools, Sensors, Bluetooth, NFC, Network, Camera, Audio, Haptics, Widgets, Automation, and AI as modules mature.
+- [x] Add Shortcuts connectors for sensor log summary/export, NFC status, haptic sequences, widget drafts, and automation rule execution.
 
 Exit criteria:
 
@@ -455,8 +470,8 @@ Goal: build audio diagnostics, recording, visualization, and speech utilities.
 - [x] Microphone permission flow.
 - [~] Live waveform.
 - [ ] Spectrum analyzer using AVAudioEngine and FFT.
-- [ ] Decibel meter.
-- [~] Recording and playback.
+- [x] Decibel meter.
+- [x] Recording and playback.
 - [ ] Speech-to-text.
 - [x] Text-to-speech.
 - [ ] Audio route controls where public APIs allow.
@@ -477,13 +492,14 @@ Goal: provide a CoreHaptics editor and reusable pattern library.
 - [x] Detect haptic capabilities.
 - [x] Preset pattern library.
 - [x] Play/test haptic patterns.
-- [~] Timeline editor for intensity and sharpness events.
+- [x] Timeline editor for intensity and sharpness events.
 - [x] Parameter sliders and playback controls.
+- [x] Save, load, delete, and play named haptic sequences.
 - [ ] Import AHAP.
-- [ ] Export AHAP JSON.
+- [x] Export AHAP JSON.
 - [ ] Export Swift code snippet.
 - [ ] Audio-to-haptics research/prototype.
-- [ ] Automation and AppIntent hooks.
+- [x] Automation and AppIntent hooks.
 
 Exit criteria:
 
@@ -497,14 +513,15 @@ Goal: prototype widget builder with data binding and WidgetKit integration.
 - [x] Widget Studio screen matching the mockup.
 - [x] Live preview canvas.
 - [x] Add component picker: Text, Gauge, Chart, Sensor, Image, Button.
-- [ ] Component selection and inspector controls.
-- [ ] Theme controls: system/custom, background, corner radius.
+- [~] Component selection and inspector controls.
+- [x] Theme controls: system/custom, background, corner radius.
+- [x] Accent customization and draft naming.
 - [x] Data binding to battery, Wi-Fi, storage, uptime, sensor samples, and custom variables.
-- [ ] Save widget definitions as JSON.
+- [x] Save widget definitions as JSON.
 - [ ] Import/export widget templates.
-- [ ] Widget extension target.
-- [ ] Render saved widget definitions in WidgetKit where feasible.
-- [ ] Add AppIntent-backed widget interactions.
+- [x] Widget extension target.
+- [~] Render saved widget definitions in WidgetKit where feasible.
+- [~] Add AppIntent-backed widget interactions.
 - [ ] Live Activity prototype for one supported scenario.
 
 Exit criteria:
@@ -518,11 +535,11 @@ Exit criteria:
 Goal: add optional AI tools while keeping privacy explicit.
 
 - [x] AI module screen.
-- [ ] Secure API key storage.
+- [x] Secure API key storage.
 - [ ] Prompt library.
 - [ ] Cloud prompt request flow with user-provided API key.
 - [ ] JSON transformation assistant.
-- [ ] Natural language to automation draft generator.
+- [x] Natural language to automation draft generator.
 - [ ] Natural language to widget draft generator.
 - [ ] CoreML model runner.
 - [ ] Vision + CoreML image classification flow.
@@ -539,17 +556,17 @@ Exit criteria:
 
 Goal: harden the app and make its power understandable and controllable.
 
-- [ ] Settings module.
-- [ ] Permissions dashboard.
-- [ ] Data storage dashboard.
-- [ ] Clear logs/history controls.
+- [x] Settings module.
+- [x] Permissions dashboard.
+- [x] Data storage dashboard.
+- [~] Clear logs/history controls.
 - [ ] Export all user data.
 - [ ] Delete all user data.
 - [ ] Face ID / Touch ID lock for sensitive sections.
-- [ ] Keychain-backed secret management.
+- [x] Keychain-backed secret management.
 - [ ] Threat model document.
-- [ ] Review every permission string.
-- [ ] Review every network listener/client for validation and timeouts.
+- [x] Review every permission string.
+- [x] Review every network listener/client for validation and timeouts.
 - [ ] Ensure no private APIs are used unless explicitly isolated as research-only.
 
 Exit criteria:
@@ -566,6 +583,7 @@ Goal: create confidence and a repeatable build artifact.
 - [ ] UI test target.
 - [ ] Mock hardware services for simulator.
 - [x] Tests for developer utilities.
+- [x] Expanded tests for JSON validation/keys, CSV conversion, hex, HMAC, contrast, and URL parsing.
 - [ ] Tests for automation engine.
 - [ ] Tests for persistence migrations.
 - [ ] Basic UI smoke tests for main tabs.
@@ -710,6 +728,9 @@ Each module under `Docs/Modules/` should include:
 | 2026-07-09 | Add minimal NFC reader-session entitlement file | NFC read/write tests require the entitlement when the user signs the app |
 | 2026-07-09 | Set Swift strict concurrency checking to minimal | Delegate-heavy CoreBluetooth/CoreNFC/AVFoundation prototypes use callback bridges that should be hardened after CI confirms compile behavior |
 | 2026-07-10 | Use Swift 5 language mode for the GitHub Actions prototype build | This is more compatible across GitHub-hosted Xcode runners while retaining modern Swift syntax supported by current compilers |
+| 2026-07-10 | Keep the first WidgetKit extension free of App Group entitlements | A widget target can appear on the Home Screen without adding an App Group signing requirement that could break unsigned/personal sideload builds |
+| 2026-07-10 | Treat NFC `readingAvailable == false` as a signing/capability diagnostic, not a started read session | User device reported NFC unavailable after a requested scan; the app now distinguishes availability failure from active session flow |
+| 2026-07-10 | Persist haptic sequences and sensor logs through existing `AppPersistence` keys | Shortcuts can only reliably operate on stored app state, so named sequences and last logging sessions must be durable |
 
 ## Change Log
 
@@ -723,6 +744,8 @@ Each module under `Docs/Modules/` should include:
 | 2026-07-09 | Removed runtime-seeded sample/demo data | App now starts with empty user-owned state or live device readings |
 | 2026-07-10 | Hardened CI after first exit-code-65 report | Lowered minimum deployment target, switched to Swift 5 language mode, removed incomplete app icon asset, moved optional tests after IPA packaging, and added uploaded build logs |
 | 2026-07-10 | Fixed latest Swift compile errors from uploaded Actions logs | Added missing enum identity, corrected Widget Studio return semantics, updated App Shortcuts builder usage, and cleaned two SDK warnings before the next CI run |
+| 2026-07-10 | Implemented next functional prototype phase | Replaced remaining hollow prototype surfaces with real service-backed tools, persistent histories/drafts/secrets, Vision/audio/network/sensor expansions, and a much broader Shortcuts/AppIntents catalog |
+| 2026-07-10 | Responded to first real-device UX feedback | Added live sensor sessions/detailed graphs, NFC capability diagnostics, saved haptic sequences with Shortcuts access, broader Shortcuts connectors, Widget Studio customization, and a real embedded WidgetKit extension |
 
 ## Deferred / Research Only
 

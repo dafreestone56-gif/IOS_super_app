@@ -1,6 +1,7 @@
 import AVFoundation
 import Combine
 import CoreBluetooth
+import CoreLocation
 import CoreMotion
 import CryptoKit
 import Foundation
@@ -50,16 +51,36 @@ enum AppPersistence {
 }
 
 @MainActor
-final class SensorService: ObservableObject {
+final class SensorService: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published private(set) var metrics: [SensorMetric] = []
     @Published private(set) var lastUpdated = Date()
+    @Published private(set) var locationAuthorization = "Not requested"
+    @Published private(set) var isLogging = false
+    @Published private(set) var loggingStartedAt: Date?
+    @Published private(set) var loggedSamples: [SensorLogSample] = AppPersistence.load([SensorLogSample].self, key: "sensor.loggedSamples", fallback: [])
 
     private let motionManager = CMMotionManager()
+    private let altimeter = CMAltimeter()
+    private let locationManager = CLLocationManager()
     private var timer: Timer?
     private var history: [String: [Double]] = [:]
+    private var pressureKilopascals: Double?
+    private var relativeAltitudeMeters: Double?
+    private var latestLocation: CLLocation?
+    private var latestHeading: CLHeading?
+    private var loggingPersistenceCounter = 0
+
+    override init() {
+        super.init()
+        locationManager.delegate = self
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager.headingFilter = 3
+        locationAuthorization = Self.authorizationDescription(locationManager.authorizationStatus)
+    }
 
     func start() {
         UIDevice.current.isBatteryMonitoringEnabled = true
+        UIDevice.current.isProximityMonitoringEnabled = true
 
         if motionManager.isAccelerometerAvailable && !motionManager.isAccelerometerActive {
             motionManager.accelerometerUpdateInterval = 0.25
@@ -71,9 +92,30 @@ final class SensorService: ObservableObject {
             motionManager.startGyroUpdates()
         }
 
+        if motionManager.isMagnetometerAvailable && !motionManager.isMagnetometerActive {
+            motionManager.magnetometerUpdateInterval = 0.25
+            motionManager.startMagnetometerUpdates()
+        }
+
+        if motionManager.isDeviceMotionAvailable && !motionManager.isDeviceMotionActive {
+            motionManager.deviceMotionUpdateInterval = 0.25
+            motionManager.startDeviceMotionUpdates()
+        }
+
+        if CMAltimeter.isRelativeAltitudeAvailable() {
+            altimeter.startRelativeAltitudeUpdates(to: .main) { [weak self] data, _ in
+                guard let data else { return }
+                Task { @MainActor in
+                    self?.pressureKilopascals = data.pressure.doubleValue
+                    self?.relativeAltitudeMeters = data.relativeAltitude.doubleValue
+                }
+            }
+        }
+
+        startLocationStreamsIfAuthorized()
         update()
         guard timer == nil else { return }
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+        timer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.update()
             }
@@ -85,6 +127,50 @@ final class SensorService: ObservableObject {
         timer = nil
         motionManager.stopAccelerometerUpdates()
         motionManager.stopGyroUpdates()
+        motionManager.stopMagnetometerUpdates()
+        motionManager.stopDeviceMotionUpdates()
+        altimeter.stopRelativeAltitudeUpdates()
+        locationManager.stopUpdatingLocation()
+        locationManager.stopUpdatingHeading()
+        UIDevice.current.isProximityMonitoringEnabled = false
+    }
+
+    func requestLocationAccess() {
+        locationManager.requestWhenInUseAuthorization()
+    }
+
+    func startLogging() {
+        start()
+        loggedSamples.removeAll()
+        loggingStartedAt = Date()
+        isLogging = true
+        loggingPersistenceCounter = 0
+        AppPersistence.save(loggedSamples, key: "sensor.loggedSamples")
+    }
+
+    func stopLogging() {
+        isLogging = false
+        AppPersistence.save(loggedSamples, key: "sensor.loggedSamples")
+    }
+
+    func clearLoggedSamples() {
+        isLogging = false
+        loggingStartedAt = nil
+        loggedSamples.removeAll()
+        AppPersistence.save(loggedSamples, key: "sensor.loggedSamples")
+    }
+
+    func samples(for sensor: String) -> [SensorLogSample] {
+        loggedSamples.filter { $0.sensor == sensor }
+    }
+
+    func exportLoggedCSV() -> String {
+        var rows = ["date,sensor,value,detail"]
+        let formatter = ISO8601DateFormatter()
+        for sample in loggedSamples {
+            rows.append("\"\(formatter.string(from: sample.date))\",\"\(sample.sensor)\",\"\(String(format: "%.6f", sample.value))\",\"\(sample.detail.replacingOccurrences(of: "\"", with: "\"\""))\"")
+        }
+        return rows.joined(separator: "\n")
     }
 
     func exportCSV() -> String {
@@ -93,6 +179,21 @@ final class SensorService: ObservableObject {
             rows.append("\"\(metric.title)\",\"\(metric.value)\",\"\(metric.detail)\",\"\(ISO8601DateFormatter().string(from: lastUpdated))\"")
         }
         return rows.joined(separator: "\n")
+    }
+
+    func exportJSON() -> String {
+        let snapshot = metrics.map { metric in
+            [
+                "title": metric.title,
+                "value": metric.value,
+                "detail": metric.detail,
+                "updated": ISO8601DateFormatter().string(from: lastUpdated)
+            ]
+        }
+        guard let data = try? JSONSerialization.data(withJSONObject: snapshot, options: [.prettyPrinted, .sortedKeys]) else {
+            return "[]"
+        }
+        return String(decoding: data, as: UTF8.self)
     }
 
     private func update() {
@@ -108,6 +209,12 @@ final class SensorService: ObservableObject {
         let memory = ByteCountFormatter.string(fromByteCount: Int64(ProcessInfo.processInfo.physicalMemory), countStyle: .memory)
         let acceleration = motionManager.accelerometerData?.acceleration
         let gyro = motionManager.gyroData?.rotationRate
+        let magnetometer = motionManager.magnetometerData?.magneticField
+        let attitude = motionManager.deviceMotion?.attitude
+        let altitude = relativeAltitudeMeters
+        let pressure = pressureKilopascals
+        let heading = latestHeading
+        let location = latestLocation
 
         metrics = [
             SensorMetric(
@@ -127,6 +234,22 @@ final class SensorService: ObservableObject {
                 trend: append("gyroscope", value: gyro.map { sqrt($0.x * $0.x + $0.y * $0.y + $0.z * $0.z) })
             ),
             SensorMetric(
+                title: "Magnetometer",
+                detail: magnetometer.map { String(format: "X: %.1f  Y: %.1f  Z: %.1f uT", $0.x, $0.y, $0.z) } ?? "No magnetometer reading yet",
+                value: magnetometer == nil ? "Waiting" : "Live",
+                symbol: "safari",
+                tint: magnetometer == nil ? .gray : .green,
+                trend: append("magnetometer", value: magnetometer.map { sqrt($0.x * $0.x + $0.y * $0.y + $0.z * $0.z) })
+            ),
+            SensorMetric(
+                title: "Device Motion",
+                detail: attitude.map { String(format: "Pitch %.1f  Roll %.1f  Yaw %.1f deg", $0.pitch.degrees, $0.roll.degrees, $0.yaw.degrees) } ?? "No fused motion reading yet",
+                value: attitude == nil ? "Waiting" : "Fused",
+                symbol: "rotate.3d",
+                tint: attitude == nil ? .gray : .blue,
+                trend: append("deviceMotion", value: attitude.map { abs($0.pitch) + abs($0.roll) + abs($0.yaw) })
+            ),
+            SensorMetric(
                 title: "Battery",
                 detail: batteryState,
                 value: batteryPercent.map { "\($0)%" } ?? "Unavailable",
@@ -141,6 +264,30 @@ final class SensorService: ObservableObject {
                 symbol: "thermometer.medium",
                 tint: ProcessInfo.processInfo.thermalState == .nominal ? .green : .orange,
                 trend: append("thermal", value: Double(ProcessInfo.processInfo.thermalState.severityValue))
+            ),
+            SensorMetric(
+                title: "Barometer",
+                detail: pressure.map { String(format: "%.2f kPa  Relative altitude %@", $0, altitude.map { String(format: "%.2f m", $0) } ?? "unknown") } ?? "Barometer unavailable or warming up",
+                value: pressure.map { String(format: "%.2f kPa", $0) } ?? "Unavailable",
+                symbol: "barometer",
+                tint: pressure == nil ? .gray : .mint,
+                trend: append("barometer", value: pressure)
+            ),
+            SensorMetric(
+                title: "Heading",
+                detail: heading.map { String(format: "Magnetic %.0f deg  True %.0f deg", $0.magneticHeading, $0.trueHeading) } ?? "Location permission required for heading",
+                value: heading.map { String(format: "%.0f deg", $0.magneticHeading) } ?? locationAuthorization,
+                symbol: "location.north.line.fill",
+                tint: heading == nil ? .gray : .cyan,
+                trend: append("heading", value: heading?.magneticHeading)
+            ),
+            SensorMetric(
+                title: "Location",
+                detail: location.map { String(format: "Lat %.5f  Lon %.5f  Accuracy %.0f m", $0.coordinate.latitude, $0.coordinate.longitude, $0.horizontalAccuracy) } ?? "Location permission required",
+                value: location.map { String(format: "%.0f m", $0.horizontalAccuracy) } ?? locationAuthorization,
+                symbol: "location.circle.fill",
+                tint: location == nil ? .gray : .green,
+                trend: append("locationAccuracy", value: location?.horizontalAccuracy)
             ),
             SensorMetric(
                 title: "Display",
@@ -167,6 +314,14 @@ final class SensorService: ObservableObject {
                 trend: []
             ),
             SensorMetric(
+                title: "Proximity",
+                detail: UIDevice.current.isProximityMonitoringEnabled ? "Proximity monitor enabled" : "Proximity monitor unavailable",
+                value: UIDevice.current.proximityState ? "Near" : "Far",
+                symbol: "sensor",
+                tint: UIDevice.current.proximityState ? .orange : .green,
+                trend: append("proximity", value: UIDevice.current.proximityState ? 1 : 0)
+            ),
+            SensorMetric(
                 title: "Orientation",
                 detail: UIDevice.current.orientation.description,
                 value: UIDevice.current.orientation == .unknown ? "Unknown" : "Device",
@@ -175,14 +330,70 @@ final class SensorService: ObservableObject {
                 trend: []
             )
         ]
+
+        appendLogSamplesIfNeeded()
     }
 
     private func append(_ key: String, value: Double?) -> [Double] {
         guard let value else { return history[key] ?? [] }
         var values = history[key] ?? []
         values.append(value)
-        history[key] = Array(values.suffix(24))
+        history[key] = Array(values.suffix(180))
         return history[key] ?? []
+    }
+
+    private func appendLogSamplesIfNeeded() {
+        guard isLogging else { return }
+        let date = Date()
+        let samples = metrics.compactMap { metric -> SensorLogSample? in
+            guard let value = metric.trend.last else { return nil }
+            return SensorLogSample(date: date, sensor: metric.title, value: value, detail: metric.detail)
+        }
+        guard !samples.isEmpty else { return }
+        loggedSamples.append(contentsOf: samples)
+        loggedSamples = Array(loggedSamples.suffix(50_000))
+        loggingPersistenceCounter += 1
+        if loggingPersistenceCounter % 5 == 0 {
+            AppPersistence.save(loggedSamples, key: "sensor.loggedSamples")
+        }
+    }
+
+    private func startLocationStreamsIfAuthorized() {
+        switch locationManager.authorizationStatus {
+        case .authorizedAlways, .authorizedWhenInUse:
+            locationManager.startUpdatingLocation()
+            if CLLocationManager.headingAvailable() {
+                locationManager.startUpdatingHeading()
+            }
+        default:
+            break
+        }
+    }
+
+    nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        Task { @MainActor in
+            locationAuthorization = Self.authorizationDescription(manager.authorizationStatus)
+            startLocationStreamsIfAuthorized()
+        }
+    }
+
+    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard let location = locations.last else { return }
+        Task { @MainActor in
+            latestLocation = location
+        }
+    }
+
+    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
+        Task { @MainActor in
+            latestHeading = newHeading
+        }
+    }
+
+    nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        Task { @MainActor in
+            locationAuthorization = "Location error: \(error.localizedDescription)"
+        }
     }
 
     private static func batteryStateDescription(_ state: UIDevice.BatteryState) -> String {
@@ -211,6 +422,21 @@ final class SensorService: ObservableObject {
         guard let capacity = values?.volumeAvailableCapacityForImportantUsage else { return "Unknown" }
         return ByteCountFormatter.string(fromByteCount: capacity, countStyle: .file)
     }
+
+    private static func authorizationDescription(_ status: CLAuthorizationStatus) -> String {
+        switch status {
+        case .notDetermined: "Not requested"
+        case .restricted: "Restricted"
+        case .denied: "Denied"
+        case .authorizedAlways: "Always"
+        case .authorizedWhenInUse: "When in use"
+        @unknown default: "Unknown"
+        }
+    }
+}
+
+extension Double {
+    var degrees: Double { self * 180 / .pi }
 }
 
 extension ProcessInfo.ThermalState {
@@ -248,6 +474,7 @@ final class BluetoothService: NSObject, ObservableObject, CBCentralManagerDelega
     @Published private(set) var terminalLines: [ConsoleLine] = []
     @Published private(set) var isScanning = false
     @Published private(set) var lastError: String?
+    @Published private(set) var savedDeviceIDs: [UUID] = AppPersistence.load([UUID].self, key: "ble.savedDeviceIDs", fallback: [])
 
     private var central: CBCentralManager?
     private var peripherals: [UUID: CBPeripheral] = [:]
@@ -291,6 +518,23 @@ final class BluetoothService: NSObject, ObservableObject, CBCentralManagerDelega
     func disconnect() {
         guard let id = connectedDevice?.id, let peripheral = peripherals[id] else { return }
         central?.cancelPeripheralConnection(peripheral)
+    }
+
+    func toggleSaved(_ device: BLEDevice) {
+        if savedDeviceIDs.contains(device.id) {
+            savedDeviceIDs.removeAll { $0 == device.id }
+        } else {
+            savedDeviceIDs.append(device.id)
+        }
+        AppPersistence.save(savedDeviceIDs, key: "ble.savedDeviceIDs")
+    }
+
+    func isSaved(_ device: BLEDevice) -> Bool {
+        savedDeviceIDs.contains(device.id)
+    }
+
+    func exportTerminalLog() -> String {
+        terminalLines.map { "\($0.direction.rawValue) \($0.text)" }.joined(separator: "\n")
     }
 
     func read(_ characteristic: BLECharacteristicInfo) {
@@ -542,16 +786,22 @@ private final class TCPProbeCompletion: @unchecked Sendable {
     }
 }
 
-final class NetworkService: ObservableObject {
+final class NetworkService: NSObject, ObservableObject, NetServiceBrowserDelegate, NetServiceDelegate {
     @Published private(set) var status = "Starting"
     @Published private(set) var isExpensive = false
     @Published private(set) var activeInterfaces: [String] = []
     @Published private(set) var ipAddresses: [String] = []
+    @Published private(set) var history: [NetworkHistoryItem] = AppPersistence.load([NetworkHistoryItem].self, key: "network.history", fallback: [])
+    @Published private(set) var bonjourServices: [BonjourServiceInfo] = []
+    @Published private(set) var bonjourStatus = "Idle"
 
     private let monitor = NWPathMonitor()
     private let queue = DispatchQueue(label: "ToolkitNetworkMonitor")
+    private var browser: NetServiceBrowser?
+    private var resolvingServices: [String: NetService] = [:]
 
-    init() {
+    override init() {
+        super.init()
         monitor.pathUpdateHandler = { [weak self] path in
             DispatchQueue.main.async {
                 self?.status = path.status == .satisfied ? "Online" : "Offline"
@@ -568,16 +818,147 @@ final class NetworkService: ObservableObject {
     }
 
     func httpGet(_ rawURL: String) async -> String {
+        await httpRequest(url: rawURL, method: "GET", headers: "", body: "")
+    }
+
+    func httpRequest(url rawURL: String, method: String, headers rawHeaders: String, body: String) async -> String {
         guard let url = URL(string: rawURL), ["http", "https"].contains(url.scheme?.lowercased()) else {
             return "Enter a valid http or https URL."
         }
+        let start = Date()
         do {
-            let (data, response) = try await URLSession.shared.data(from: url)
+            var request = URLRequest(url: url, timeoutInterval: 30)
+            request.httpMethod = method.uppercased()
+            for header in Self.parseHeaders(rawHeaders) {
+                request.setValue(header.value, forHTTPHeaderField: header.key)
+            }
+            if !body.isEmpty, !["GET", "HEAD"].contains(request.httpMethod ?? "GET") {
+                request.httpBody = Data(body.utf8)
+            }
+            let (data, response) = try await URLSession.shared.data(for: request)
             let code = (response as? HTTPURLResponse)?.statusCode ?? 0
             let body = String(data: data, encoding: .utf8) ?? "\(data.count) bytes"
-            return "HTTP \(code)\n\n\(body)"
+            let elapsed = Int(Date().timeIntervalSince(start) * 1000)
+            let result = "HTTP \(code)  \(elapsed) ms\n\n\(body)"
+            await MainActor.run {
+                recordHistory(title: "\(request.httpMethod ?? method.uppercased()) \(url.host ?? rawURL)", request: rawURL, response: result, duration: elapsed)
+            }
+            return result
         } catch {
-            return "Request failed: \(error.localizedDescription)"
+            let elapsed = Int(Date().timeIntervalSince(start) * 1000)
+            let result = "Request failed after \(elapsed) ms: \(error.localizedDescription)"
+            await MainActor.run {
+                recordHistory(title: "HTTP failed", request: rawURL, response: result, duration: elapsed)
+            }
+            return result
+        }
+    }
+
+    func dnsLookup(host: String) async -> String {
+        let trimmed = host.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return "Enter a host name." }
+
+        return await Task.detached(priority: .utility) {
+            #if canImport(Darwin)
+            var hints = addrinfo(
+                ai_flags: AI_ADDRCONFIG,
+                ai_family: AF_UNSPEC,
+                ai_socktype: SOCK_STREAM,
+                ai_protocol: 0,
+                ai_addrlen: 0,
+                ai_canonname: nil,
+                ai_addr: nil,
+                ai_next: nil
+            )
+            var infoPointer: UnsafeMutablePointer<addrinfo>?
+            let code = getaddrinfo(trimmed, nil, &hints, &infoPointer)
+            guard code == 0, let first = infoPointer else {
+                return "DNS lookup failed: \(String(cString: gai_strerror(code)))"
+            }
+            defer { freeaddrinfo(infoPointer) }
+
+            var addresses: [String] = []
+            for pointer in sequence(first: first, next: { $0.pointee.ai_next }) {
+                var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+                let result = getnameinfo(
+                    pointer.pointee.ai_addr,
+                    pointer.pointee.ai_addrlen,
+                    &hostname,
+                    socklen_t(hostname.count),
+                    nil,
+                    0,
+                    NI_NUMERICHOST
+                )
+                if result == 0 {
+                    addresses.append(String(cString: hostname))
+                }
+            }
+            let unique = Array(Set(addresses)).sorted()
+            return unique.isEmpty ? "No DNS addresses returned." : unique.joined(separator: "\n")
+            #else
+            return "DNS lookup is unavailable in this build."
+            #endif
+        }.value
+    }
+
+    func scanPorts(host: String, ports rawPorts: String) async -> String {
+        let ports = Self.parsePorts(rawPorts)
+        guard !host.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return "Enter a host." }
+        guard !ports.isEmpty else { return "Enter ports like 22,80,443 or 8000-8010." }
+        let limitedPorts = Array(ports.prefix(32))
+        var rows: [String] = []
+        for port in limitedPorts {
+            let result = await tcpProbe(host: host, port: port, timeout: 1.25)
+            rows.append(result)
+        }
+        if ports.count > limitedPorts.count {
+            rows.append("Stopped at 32 ports to keep scans polite and battery-safe.")
+        }
+        return rows.joined(separator: "\n")
+    }
+
+    func startBonjourBrowse(type rawType: String) {
+        let type = Self.normalizedBonjourType(rawType)
+        stopBonjourBrowse()
+        bonjourServices = []
+        bonjourStatus = "Browsing \(type)"
+        let browser = NetServiceBrowser()
+        browser.delegate = self
+        self.browser = browser
+        browser.searchForServices(ofType: type, inDomain: "local.")
+    }
+
+    func stopBonjourBrowse() {
+        browser?.stop()
+        browser = nil
+        resolvingServices.removeAll()
+        bonjourStatus = "Idle"
+    }
+
+    func sendWakeOnLAN(macAddress: String, broadcastHost: String = "255.255.255.255", port: UInt16 = 9) async -> String {
+        guard let packet = Self.magicPacket(macAddress: macAddress),
+              let nwPort = NWEndpoint.Port(rawValue: port) else {
+            return "Enter a valid MAC address like AA:BB:CC:DD:EE:FF."
+        }
+
+        return await withCheckedContinuation { continuation in
+            let connection = NWConnection(host: NWEndpoint.Host(broadcastHost), port: nwPort, using: .udp)
+            connection.stateUpdateHandler = { state in
+                if case .ready = state {
+                    connection.send(content: packet, completion: .contentProcessed { error in
+                        connection.cancel()
+                        if let error {
+                            continuation.resume(returning: "Wake-on-LAN send failed: \(error.localizedDescription)")
+                        } else {
+                            continuation.resume(returning: "Wake-on-LAN packet sent to \(broadcastHost):\(port).")
+                        }
+                    })
+                } else if case .failed(let error) = state {
+                    connection.cancel()
+                    continuation.resume(returning: "Wake-on-LAN connection failed: \(error.localizedDescription)")
+                }
+            }
+            connection.start(queue: DispatchQueue.global(qos: .utility))
         }
     }
 
@@ -624,9 +1005,15 @@ final class NetworkService: ObservableObject {
             guard family == UInt8(AF_INET) || family == UInt8(AF_INET6) else { continue }
 
             var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+            let length: socklen_t
+            if family == UInt8(AF_INET) {
+                length = socklen_t(MemoryLayout<sockaddr_in>.size)
+            } else {
+                length = socklen_t(MemoryLayout<sockaddr_in6>.size)
+            }
             let result = getnameinfo(
                 addressPointer,
-                socklen_t(addressPointer.pointee.sa_len),
+                length,
                 &hostname,
                 socklen_t(hostname.count),
                 nil,
@@ -646,39 +1033,143 @@ final class NetworkService: ObservableObject {
         return []
         #endif
     }
+
+    @MainActor
+    private func recordHistory(title: String, request: String, response: String, duration: Int) {
+        history.insert(NetworkHistoryItem(date: Date(), title: title, request: request, response: response, durationMilliseconds: duration), at: 0)
+        history = Array(history.prefix(50))
+        AppPersistence.save(history, key: "network.history")
+    }
+
+    func clearHistory() {
+        history = []
+        AppPersistence.save(history, key: "network.history")
+    }
+
+    func netServiceBrowser(_ browser: NetServiceBrowser, didFind service: NetService, moreComing: Bool) {
+        service.delegate = self
+        resolvingServices[service.name] = service
+        service.resolve(withTimeout: 5)
+    }
+
+    func netServiceBrowser(_ browser: NetServiceBrowser, didNotSearch errorDict: [String: NSNumber]) {
+        DispatchQueue.main.async {
+            self.bonjourStatus = "Browse failed: \(errorDict)"
+        }
+    }
+
+    func netServiceDidResolveAddress(_ sender: NetService) {
+        let info = BonjourServiceInfo(
+            name: sender.name,
+            type: sender.type,
+            domain: sender.domain,
+            hostName: sender.hostName ?? "Unknown host",
+            port: sender.port
+        )
+        DispatchQueue.main.async {
+            if let index = self.bonjourServices.firstIndex(where: { $0.id == info.id }) {
+                self.bonjourServices[index] = info
+            } else {
+                self.bonjourServices.append(info)
+            }
+            self.bonjourServices.sort { $0.name < $1.name }
+            self.bonjourStatus = "Found \(self.bonjourServices.count) service(s)"
+        }
+    }
+
+    private static func parseHeaders(_ raw: String) -> [(key: String, value: String)] {
+        raw.split(whereSeparator: \.isNewline).compactMap { line in
+            let parts = line.split(separator: ":", maxSplits: 1).map(String.init)
+            guard parts.count == 2 else { return nil }
+            return (parts[0].trimmingCharacters(in: .whitespaces), parts[1].trimmingCharacters(in: .whitespaces))
+        }
+    }
+
+    private static func parsePorts(_ raw: String) -> [UInt16] {
+        var ports: Set<UInt16> = []
+        for part in raw.split(separator: ",") {
+            let trimmed = part.trimmingCharacters(in: .whitespaces)
+            if let dash = trimmed.firstIndex(of: "-") {
+                let startText = trimmed[..<dash]
+                let endText = trimmed[trimmed.index(after: dash)...]
+                if let start = UInt16(String(startText)), let end = UInt16(String(endText)), start <= end {
+                    for port in start...end {
+                        ports.insert(port)
+                    }
+                }
+            } else if let port = UInt16(trimmed) {
+                ports.insert(port)
+            }
+        }
+        return ports.sorted()
+    }
+
+    private static func normalizedBonjourType(_ raw: String) -> String {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty { return "_http._tcp." }
+        if trimmed.hasSuffix(".") { return trimmed }
+        return "\(trimmed)."
+    }
+
+    private static func magicPacket(macAddress: String) -> Data? {
+        let hex = macAddress.filter { $0.isHexDigit }
+        guard hex.count == 12 else { return nil }
+        var bytes: [UInt8] = []
+        var index = hex.startIndex
+        while index < hex.endIndex {
+            let next = hex.index(index, offsetBy: 2)
+            guard let byte = UInt8(hex[index..<next], radix: 16) else { return nil }
+            bytes.append(byte)
+            index = next
+        }
+        var packet = Data(repeating: 0xFF, count: 6)
+        for _ in 0..<16 {
+            packet.append(contentsOf: bytes)
+        }
+        return packet
+    }
 }
 
 final class NFCService: NSObject, ObservableObject {
     @Published private(set) var lastResult: NFCScanResult?
     @Published private(set) var history: [NFCScanResult] = AppPersistence.load([NFCScanResult].self, key: "nfc.history", fallback: [])
     @Published private(set) var status = "Ready"
+    @Published private(set) var availabilityDetail = NFCService.currentAvailabilityDetail()
 
     #if canImport(CoreNFC)
     private var session: NFCNDEFReaderSession?
     private var pendingWriteMessage: NFCNDEFMessage?
     #endif
 
-    func beginRead() {
+    @discardableResult
+    func beginRead() -> Bool {
         #if canImport(CoreNFC)
         guard NFCNDEFReaderSession.readingAvailable else {
-            status = "NFC reading is unavailable on this device."
-            return
+            availabilityDetail = Self.currentAvailabilityDetail()
+            status = "NFC reader unavailable. Check signing capability."
+            return false
         }
         pendingWriteMessage = nil
+        availabilityDetail = Self.currentAvailabilityDetail()
         status = "Hold near an NFC tag."
         session = NFCNDEFReaderSession(delegate: self, queue: nil, invalidateAfterFirstRead: true)
         session?.alertMessage = "Scan an NDEF tag"
         session?.begin()
+        return true
         #else
         status = "CoreNFC is unavailable in this build."
+        availabilityDetail = Self.currentAvailabilityDetail()
+        return false
         #endif
     }
 
-    func beginWrite(text: String) {
+    @discardableResult
+    func beginWrite(text: String) -> Bool {
         #if canImport(CoreNFC)
         guard NFCNDEFReaderSession.readingAvailable else {
-            status = "NFC writing is unavailable on this device."
-            return
+            availabilityDetail = Self.currentAvailabilityDetail()
+            status = "NFC writer unavailable. Check signing capability."
+            return false
         }
         let payload: NFCNDEFPayload
         if let url = URL(string: text), url.scheme != nil {
@@ -687,13 +1178,21 @@ final class NFCService: NSObject, ObservableObject {
             payload = NFCNDEFPayload.wellKnownTypeTextPayload(string: text, locale: Locale.current) ?? NFCNDEFPayload(format: .nfcWellKnown, type: Data([0x54]), identifier: Data(), payload: Data(text.utf8))
         }
         pendingWriteMessage = NFCNDEFMessage(records: [payload])
+        availabilityDetail = Self.currentAvailabilityDetail()
         status = "Hold near a writable NFC tag."
         session = NFCNDEFReaderSession(delegate: self, queue: nil, invalidateAfterFirstRead: false)
         session?.alertMessage = "Hold near a writable NDEF tag"
         session?.begin()
+        return true
         #else
         status = "CoreNFC is unavailable in this build."
+        availabilityDetail = Self.currentAvailabilityDetail()
+        return false
         #endif
+    }
+
+    func refreshAvailability() {
+        availabilityDetail = Self.currentAvailabilityDetail()
     }
 
     func clearHistory() {
@@ -702,12 +1201,35 @@ final class NFCService: NSObject, ObservableObject {
         AppPersistence.save(history, key: "nfc.history")
     }
 
+    func exportHistoryJSON() -> String {
+        guard let data = try? JSONEncoder().encode(history),
+              let json = String(data: data, encoding: .utf8) else {
+            return "[]"
+        }
+        return json
+    }
+
     private func store(title: String, payload: String, detail: String) {
         let result = NFCScanResult(date: Date(), title: title, payload: payload, detail: detail)
         lastResult = result
         history.insert(result, at: 0)
         history = Array(history.prefix(100))
         AppPersistence.save(history, key: "nfc.history")
+    }
+
+    static func currentAvailabilityDetail() -> String {
+        #if canImport(CoreNFC)
+        if NFCNDEFReaderSession.readingAvailable {
+            return "CoreNFC reports the NDEF reader is available on this signed build."
+        }
+        #if targetEnvironment(simulator)
+        return "The iOS simulator cannot scan NFC tags. Test this module on a physical NFC-capable iPhone."
+        #else
+        return "CoreNFC reports NFC reading is unavailable. On a physical iPhone this usually means the app was signed without the NFC Tag Reading capability or without the NFC reader session formats entitlement in the provisioning profile."
+        #endif
+        #else
+        return "CoreNFC was not linked into this build."
+        #endif
     }
 }
 
@@ -788,17 +1310,19 @@ final class AutomationService: ObservableObject {
     @Published private(set) var rules: [AutomationRule] = AppPersistence.load([AutomationRule].self, key: "automation.rules", fallback: [])
     @Published private(set) var executionLog: [String] = []
 
-    func add(title: String, trigger: String, action: String, symbol: String = "gearshape.2.fill", tintKey: String = "purple") {
+    @discardableResult
+    func add(title: String, trigger: String, action: String, symbol: String = "gearshape.2.fill", tintKey: String = "purple", isEnabled: Bool = true) -> AutomationRule {
         let rule = AutomationRule(
             title: title.isEmpty ? "Untitled Automation" : title,
             trigger: trigger.isEmpty ? "Manual trigger" : trigger,
             action: action.isEmpty ? "Log event" : action,
             symbol: symbol,
             tintKey: tintKey,
-            isEnabled: true
+            isEnabled: isEnabled
         )
         rules.insert(rule, at: 0)
         persist()
+        return rule
     }
 
     func setEnabled(_ rule: AutomationRule, enabled: Bool) {
@@ -807,9 +1331,12 @@ final class AutomationService: ObservableObject {
         persist()
     }
 
-    func run(_ rule: AutomationRule) {
-        executionLog.insert("\(Date().formatted(date: .abbreviated, time: .standard)): \(rule.title) -> \(rule.action)", at: 0)
+    @discardableResult
+    func run(_ rule: AutomationRule) -> String {
+        let line = "\(Date().formatted(date: .abbreviated, time: .standard)): \(rule.title) -> \(rule.action)"
+        executionLog.insert(line, at: 0)
         executionLog = Array(executionLog.prefix(80))
+        return line
     }
 
     func delete(_ rule: AutomationRule) {
@@ -825,16 +1352,24 @@ final class AutomationService: ObservableObject {
 @MainActor
 final class AudioService: NSObject, ObservableObject, AVAudioRecorderDelegate {
     @Published private(set) var levels: [Double] = []
+    @Published private(set) var currentDecibels: Float = -80
     @Published private(set) var isMonitoring = false
     @Published private(set) var permissionStatus = "Not requested"
     @Published private(set) var routeDescription = "Default"
+    @Published private(set) var inputDescription = "Default"
+    @Published private(set) var lastRecordingName = "No recording yet"
 
     private var recorder: AVAudioRecorder?
+    private var player: AVAudioPlayer?
     private var timer: Timer?
+    private var lastRecordingURL: URL?
 
     func refreshRoute() {
-        let outputs = AVAudioSession.sharedInstance().currentRoute.outputs.map(\.portName)
+        let session = AVAudioSession.sharedInstance()
+        let outputs = session.currentRoute.outputs.map(\.portName)
+        let inputs = session.availableInputs?.map { "\($0.portName) (\($0.portType.rawValue))" } ?? []
         routeDescription = outputs.isEmpty ? "Default" : outputs.joined(separator: ", ")
+        inputDescription = inputs.isEmpty ? "Default" : inputs.joined(separator: ", ")
     }
 
     func requestPermission() {
@@ -858,7 +1393,8 @@ final class AudioService: NSObject, ObservableObject, AVAudioRecorderDelegate {
             let session = AVAudioSession.sharedInstance()
             try session.setCategory(.playAndRecord, mode: .measurement, options: [.defaultToSpeaker, .allowBluetoothHFP])
             try session.setActive(true)
-            let url = FileManager.default.temporaryDirectory.appendingPathComponent("ToolkitAudioMeter.caf")
+            let directory = try Self.recordingsDirectory()
+            let url = directory.appendingPathComponent("Toolkit-\(Int(Date().timeIntervalSince1970)).caf")
             let settings: [String: Any] = [
                 AVFormatIDKey: Int(kAudioFormatAppleIMA4),
                 AVSampleRateKey: 44_100,
@@ -866,6 +1402,8 @@ final class AudioService: NSObject, ObservableObject, AVAudioRecorderDelegate {
                 AVEncoderAudioQualityKey: AVAudioQuality.low.rawValue
             ]
             recorder = try AVAudioRecorder(url: url, settings: settings)
+            lastRecordingURL = url
+            lastRecordingName = url.lastPathComponent
             recorder?.isMeteringEnabled = true
             recorder?.delegate = self
             recorder?.record()
@@ -891,12 +1429,31 @@ final class AudioService: NSObject, ObservableObject, AVAudioRecorderDelegate {
         try? AVAudioSession.sharedInstance().setActive(false)
     }
 
+    func playLastRecording() -> String {
+        guard let lastRecordingURL else { return "No recording has been captured yet." }
+        do {
+            player = try AVAudioPlayer(contentsOf: lastRecordingURL)
+            player?.prepareToPlay()
+            player?.play()
+            return "Playing \(lastRecordingURL.lastPathComponent)."
+        } catch {
+            return "Playback failed: \(error.localizedDescription)"
+        }
+    }
+
     private func updateMeter() {
         recorder?.updateMeters()
         let power = recorder?.averagePower(forChannel: 0) ?? -80
+        currentDecibels = power
         let normalized = max(0, min(1, (Double(power) + 80) / 80))
         levels.append(normalized)
         levels = Array(levels.suffix(64))
+    }
+
+    private static func recordingsDirectory() throws -> URL {
+        let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("Recordings", isDirectory: true)
+        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        return url
     }
 }
 
@@ -904,17 +1461,40 @@ struct DeveloperUtilityService {
     func run(_ tool: DeveloperToolKind, input: String, pattern: String = "") -> String {
         do {
             switch tool {
+            case .validateJSON:
+                return try validateJSON(input)
             case .formatJSON:
                 return try formatJSON(input)
             case .minifyJSON:
                 return try minifyJSON(input)
+            case .jsonKeys:
+                return try jsonKeys(input)
+            case .csvToJSON:
+                return try csvToJSON(input)
             case .base64Encode:
                 return Data(input.utf8).base64EncodedString()
             case .base64Decode:
                 guard let data = Data(base64Encoded: input) else { return "Invalid Base64 input." }
                 return String(decoding: data, as: UTF8.self)
+            case .base64URLEncode:
+                return Data(input.utf8).base64EncodedString().replacingOccurrences(of: "+", with: "-").replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: "=", with: "")
+            case .base64URLDecode:
+                return decodeBase64URL(input)
+            case .hexEncode:
+                return Data(input.utf8).map { String(format: "%02x", $0) }.joined()
+            case .hexDecode:
+                return try hexDecode(input)
             case .sha256:
                 return SHA256.hash(data: Data(input.utf8)).map { String(format: "%02x", $0) }.joined()
+            case .sha1:
+                return Insecure.SHA1.hash(data: Data(input.utf8)).map { String(format: "%02x", $0) }.joined()
+            case .md5:
+                return "Legacy MD5: " + Insecure.MD5.hash(data: Data(input.utf8)).map { String(format: "%02x", $0) }.joined()
+            case .hmacSHA256:
+                let key = SymmetricKey(data: Data(pattern.utf8))
+                return HMAC<SHA256>.authenticationCode(for: Data(input.utf8), using: key).map { String(format: "%02x", $0) }.joined()
+            case .urlParse:
+                return try parseURL(input)
             case .urlEncode:
                 return input.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? input
             case .urlDecode:
@@ -927,12 +1507,28 @@ struct DeveloperUtilityService {
                 return try regexMatches(pattern: pattern, text: input)
             case .colorHexToRGB:
                 return try hexToRGB(input)
+            case .colorContrast:
+                return try contrastRatio(input, pattern)
+            case .textDiff:
+                return textDiff(input, pattern)
             case .timestamp:
                 return timestamp(input)
             }
         } catch {
             return error.localizedDescription
         }
+    }
+
+    func validateJSON(_ text: String) throws -> String {
+        let data = Data(text.utf8)
+        let object = try JSONSerialization.jsonObject(with: data)
+        if let array = object as? [Any] {
+            return "Valid JSON array with \(array.count) item(s)."
+        }
+        if let dictionary = object as? [String: Any] {
+            return "Valid JSON object with \(dictionary.count) top-level key(s)."
+        }
+        return "Valid JSON \(type(of: object))."
     }
 
     func formatJSON(_ text: String) throws -> String {
@@ -947,6 +1543,29 @@ struct DeveloperUtilityService {
         let object = try JSONSerialization.jsonObject(with: data)
         let minified = try JSONSerialization.data(withJSONObject: object)
         return String(decoding: minified, as: UTF8.self)
+    }
+
+    func jsonKeys(_ text: String) throws -> String {
+        let data = Data(text.utf8)
+        let object = try JSONSerialization.jsonObject(with: data)
+        guard let dictionary = object as? [String: Any] else {
+            return "Top-level JSON value is not an object."
+        }
+        return dictionary.keys.sorted().joined(separator: "\n")
+    }
+
+    func csvToJSON(_ text: String) throws -> String {
+        let rows = text.split(whereSeparator: \.isNewline).map { parseCSVLine(String($0)) }
+        guard let headers = rows.first, !headers.isEmpty else { return "Enter CSV with a header row." }
+        let objects = rows.dropFirst().map { row -> [String: String] in
+            var object: [String: String] = [:]
+            for (index, header) in headers.enumerated() {
+                object[header] = index < row.count ? row[index] : ""
+            }
+            return object
+        }
+        let data = try JSONSerialization.data(withJSONObject: objects, options: [.prettyPrinted, .sortedKeys])
+        return String(decoding: data, as: UTF8.self)
     }
 
     private func decodeJWT(_ token: String) -> String {
@@ -971,6 +1590,43 @@ struct DeveloperUtilityService {
         }
         guard let data = Data(base64Encoded: base64) else { return "Invalid Base64URL segment." }
         return String(decoding: data, as: UTF8.self)
+    }
+
+    private func hexDecode(_ input: String) throws -> String {
+        let hex = input.filter { $0.isHexDigit }
+        guard hex.count.isMultiple(of: 2) else {
+            throw NSError(domain: "DeveloperUtilityService", code: 2, userInfo: [NSLocalizedDescriptionKey: "Hex input must contain an even number of digits."])
+        }
+        var data = Data()
+        var index = hex.startIndex
+        while index < hex.endIndex {
+            let next = hex.index(index, offsetBy: 2)
+            guard let byte = UInt8(hex[index..<next], radix: 16) else {
+                throw NSError(domain: "DeveloperUtilityService", code: 3, userInfo: [NSLocalizedDescriptionKey: "Invalid hex byte."])
+            }
+            data.append(byte)
+            index = next
+        }
+        return String(data: data, encoding: .utf8) ?? data.map { String(format: "%02X", $0) }.joined(separator: " ")
+    }
+
+    private func parseURL(_ input: String) throws -> String {
+        guard let components = URLComponents(string: input), components.scheme != nil else {
+            throw NSError(domain: "DeveloperUtilityService", code: 4, userInfo: [NSLocalizedDescriptionKey: "Enter a valid URL with a scheme."])
+        }
+        var rows = [
+            "Scheme: \(components.scheme ?? "")",
+            "Host: \(components.host ?? "")",
+            "Path: \(components.path.isEmpty ? "/" : components.path)"
+        ]
+        if let port = components.port {
+            rows.append("Port: \(port)")
+        }
+        if let queryItems = components.queryItems, !queryItems.isEmpty {
+            rows.append("Query:")
+            rows.append(contentsOf: queryItems.map { "  \($0.name)=\($0.value ?? "")" })
+        }
+        return rows.joined(separator: "\n")
     }
 
     private func regexMatches(pattern: String, text: String) throws -> String {
@@ -1000,11 +1656,78 @@ struct DeveloperUtilityService {
         return "RGB(\(red), \(green), \(blue))\nSwiftUI Color(red: \(red)/255, green: \(green)/255, blue: \(blue)/255)"
     }
 
+    private func contrastRatio(_ first: String, _ second: String) throws -> String {
+        let left = try rgbComponents(first)
+        let right = try rgbComponents(second)
+        let firstLum = relativeLuminance(left)
+        let secondLum = relativeLuminance(right)
+        let ratio = (max(firstLum, secondLum) + 0.05) / (min(firstLum, secondLum) + 0.05)
+        let aaNormal = ratio >= 4.5 ? "Pass" : "Fail"
+        let aaLarge = ratio >= 3.0 ? "Pass" : "Fail"
+        return String(format: "Contrast: %.2f:1\nWCAG AA normal text: %@\nWCAG AA large text: %@", ratio, aaNormal, aaLarge)
+    }
+
+    private func textDiff(_ left: String, _ right: String) -> String {
+        let leftLines = left.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        let rightLines = right.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        let count = max(leftLines.count, rightLines.count)
+        var rows: [String] = []
+        for index in 0..<count {
+            let old = index < leftLines.count ? leftLines[index] : ""
+            let new = index < rightLines.count ? rightLines[index] : ""
+            if old == new {
+                rows.append("  \(old)")
+            } else {
+                if !old.isEmpty { rows.append("- \(old)") }
+                if !new.isEmpty { rows.append("+ \(new)") }
+            }
+        }
+        return rows.isEmpty ? "No text to compare." : rows.joined(separator: "\n")
+    }
+
     private func timestamp(_ input: String) -> String {
         let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
         if let seconds = TimeInterval(trimmed) {
             return Date(timeIntervalSince1970: seconds).formatted(date: .complete, time: .complete)
         }
         return "\(Int(Date().timeIntervalSince1970))"
+    }
+
+    private func parseCSVLine(_ line: String) -> [String] {
+        var values: [String] = []
+        var current = ""
+        var isQuoted = false
+        var iterator = line.makeIterator()
+        while let character = iterator.next() {
+            if character == "\"" {
+                isQuoted.toggle()
+            } else if character == ",", !isQuoted {
+                values.append(current)
+                current = ""
+            } else {
+                current.append(character)
+            }
+        }
+        values.append(current)
+        return values.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+    }
+
+    private func rgbComponents(_ input: String) throws -> (red: Double, green: Double, blue: Double) {
+        let cleaned = input.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: "#", with: "")
+        guard cleaned.count == 6, let value = Int(cleaned, radix: 16) else {
+            throw NSError(domain: "DeveloperUtilityService", code: 5, userInfo: [NSLocalizedDescriptionKey: "Enter 6-digit hex colors for contrast."])
+        }
+        return (
+            Double((value >> 16) & 0xFF) / 255,
+            Double((value >> 8) & 0xFF) / 255,
+            Double(value & 0xFF) / 255
+        )
+    }
+
+    private func relativeLuminance(_ color: (red: Double, green: Double, blue: Double)) -> Double {
+        func channel(_ value: Double) -> Double {
+            value <= 0.03928 ? value / 12.92 : pow((value + 0.055) / 1.055, 2.4)
+        }
+        return 0.2126 * channel(color.red) + 0.7152 * channel(color.green) + 0.0722 * channel(color.blue)
     }
 }

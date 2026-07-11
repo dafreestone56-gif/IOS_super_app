@@ -9,6 +9,12 @@ struct AutomationView: View {
     @State private var title = ""
     @State private var trigger = ""
     @State private var action = ""
+    @State private var selectedTrigger = "Manual"
+    @State private var selectedAction = "Log event"
+    @State private var dryRunResult = ""
+
+    private let triggerOptions = ["Manual", "Battery below threshold", "Network offline", "NFC tag scanned", "BLE device discovered", "Time scheduled"]
+    private let actionOptions = ["Log event", "Show notification", "Play haptic", "Open module", "HTTP request"]
 
     var body: some View {
         ScrollView {
@@ -38,17 +44,38 @@ struct AutomationView: View {
                         TextField("Name", text: $title)
                             .padding(10)
                             .background(AppTheme.elevatedPanel, in: RoundedRectangle(cornerRadius: 8))
-                        TextField("Trigger", text: $trigger)
+                        Picker("Trigger", selection: $selectedTrigger) {
+                            ForEach(triggerOptions, id: \.self) { Text($0).tag($0) }
+                        }
+                        .pickerStyle(.menu)
+                        TextField("Trigger detail, threshold, tag id, host, or schedule", text: $trigger)
+                            .textInputAutocapitalization(.never)
                             .padding(10)
                             .background(AppTheme.elevatedPanel, in: RoundedRectangle(cornerRadius: 8))
-                        TextField("Action", text: $action)
+                        Picker("Action", selection: $selectedAction) {
+                            ForEach(actionOptions, id: \.self) { Text($0).tag($0) }
+                        }
+                        .pickerStyle(.menu)
+                        TextField("Action detail, module, URL, or message", text: $action)
+                            .textInputAutocapitalization(.never)
                             .padding(10)
                             .background(AppTheme.elevatedPanel, in: RoundedRectangle(cornerRadius: 8))
 
                         HStack {
                             Button {
-                                services.automations.add(title: title, trigger: trigger, action: action)
+                                let rule = services.automations.add(
+                                    title: title,
+                                    trigger: composedTrigger,
+                                    action: composedAction,
+                                    symbol: symbolForSelectedTrigger,
+                                    tintKey: tintForSelectedTrigger,
+                                    isEnabled: enableAutomation
+                                )
                                 services.log("Automation created")
+                                if runImmediately {
+                                    let line = services.automations.run(rule)
+                                    services.log(line)
+                                }
                                 title = ""
                                 trigger = ""
                                 action = ""
@@ -58,13 +85,21 @@ struct AutomationView: View {
                             .buttonStyle(.borderedProminent)
 
                             Button {
-                                trigger = "Battery Level < 20%"
-                                action = "Show Notification"
-                                title = "Low Battery Alert"
+                                dryRunResult = dryRunSummary
+                                services.log("Automation dry run completed")
                             } label: {
-                                Label("Battery Rule", systemImage: "battery.25")
+                                Label("Dry Run", systemImage: "play.circle")
                             }
                             .buttonStyle(.bordered)
+                        }
+                        if !dryRunResult.isEmpty {
+                            Text(dryRunResult)
+                                .font(.system(.caption, design: .monospaced))
+                                .foregroundStyle(AppTheme.secondaryText)
+                                .textSelection(.enabled)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(10)
+                                .background(Color.black.opacity(0.38), in: RoundedRectangle(cornerRadius: 8))
                         }
                     }
                 }
@@ -113,8 +148,11 @@ struct AutomationView: View {
             }
             Spacer()
             Button("Run") {
-                services.automations.run(rule)
+                let line = services.automations.run(rule)
                 services.log("Automation ran: \(rule.title)")
+                if notifyWhenRun {
+                    services.log(line)
+                }
             }
             .buttonStyle(.bordered)
             Button {
@@ -139,5 +177,46 @@ struct AutomationView: View {
             .foregroundStyle(AppTheme.secondaryText)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, 10)
+    }
+
+    private var composedTrigger: String {
+        trigger.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? selectedTrigger : "\(selectedTrigger): \(trigger)"
+    }
+
+    private var composedAction: String {
+        action.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? selectedAction : "\(selectedAction): \(action)"
+    }
+
+    private var dryRunSummary: String {
+        """
+        Rule: \(title.isEmpty ? "Untitled Automation" : title)
+        Enabled: \(enableAutomation ? "Yes" : "No")
+        Trigger: \(composedTrigger)
+        Action: \(composedAction)
+        Current network: \(services.network.status)
+        Sensor snapshot count: \(services.sensors.metrics.count)
+        Result: This dry run validates rule shape and current context. Background execution still follows iOS limits.
+        """
+    }
+
+    private var symbolForSelectedTrigger: String {
+        switch selectedTrigger {
+        case "Battery below threshold": "battery.25"
+        case "Network offline": "wifi.slash"
+        case "NFC tag scanned": "wave.3.right.circle.fill"
+        case "BLE device discovered": "bolt.horizontal.circle.fill"
+        case "Time scheduled": "clock"
+        default: "gearshape.2.fill"
+        }
+    }
+
+    private var tintForSelectedTrigger: String {
+        switch selectedTrigger {
+        case "Battery below threshold": "orange"
+        case "Network offline": "blue"
+        case "NFC tag scanned": "orange"
+        case "BLE device discovered": "blue"
+        default: "purple"
+        }
     }
 }

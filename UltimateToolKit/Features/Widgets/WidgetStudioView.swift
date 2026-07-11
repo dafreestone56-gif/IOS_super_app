@@ -2,14 +2,40 @@ import SwiftUI
 
 struct WidgetStudioView: View {
     @EnvironmentObject private var services: ToolkitServices
+    @State private var draftName = "Toolkit Widget"
     @State private var cornerRadius = 16.0
     @State private var theme = "System"
     @State private var background = "Blur"
+    @State private var accent = "Blue"
+    @State private var components: [WidgetDraftComponent] = [
+        WidgetDraftComponent(kind: "Battery", binding: "sensor.battery", title: "Battery"),
+        WidgetDraftComponent(kind: "Network", binding: "network.status", title: "Network")
+    ]
+    @State private var drafts: [WidgetDraft] = AppPersistence.load([WidgetDraft].self, key: "widget.drafts", fallback: [])
+    private let themes = ["System", "Compact", "Instrument", "Terminal"]
+    private let backgrounds = ["Blur", "Graphite", "Midnight", "Glass", "High Contrast"]
+    private let accents = ["Blue", "Green", "Orange", "Pink", "Purple", "Cyan"]
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 widgetPreview
+
+                GlassPanel {
+                    HStack(alignment: .top, spacing: 12) {
+                        Image(systemName: "iphone.and.arrow.forward")
+                            .font(.title2)
+                            .foregroundStyle(accentColor)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Home Screen Widget")
+                                .font(.headline)
+                            Text("Toolkit Status is included as a WidgetKit extension and appears in the iOS widget gallery after install.")
+                                .font(.caption)
+                                .foregroundStyle(AppTheme.secondaryText)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
 
                 SectionLabel(title: "Add Component")
                 GlassPanel {
@@ -22,10 +48,42 @@ struct WidgetStudioView: View {
                     }
                 }
 
+                if !components.isEmpty {
+                    SectionLabel(title: "Components")
+                    GlassPanel {
+                        VStack(spacing: 0) {
+                            ForEach(components) { component in
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 3) {
+                                        Text(component.title)
+                                        Text("\(component.kind) -> \(component.binding)")
+                                            .font(.caption)
+                                            .foregroundStyle(AppTheme.secondaryText)
+                                    }
+                                    Spacer()
+                                    Button {
+                                        components.removeAll { $0.id == component.id }
+                                    } label: {
+                                        Image(systemName: "trash")
+                                    }
+                                    .buttonStyle(.bordered)
+                                }
+                                .padding(.vertical, 8)
+                                Divider().background(AppTheme.hairline)
+                            }
+                        }
+                    }
+                }
+
                 GlassPanel {
                     VStack(spacing: 16) {
-                        settingRow("Theme", theme)
-                        settingRow("Background", background)
+                        TextField("Draft name", text: $draftName)
+                            .textInputAutocapitalization(.words)
+                            .padding(10)
+                            .background(AppTheme.elevatedPanel, in: RoundedRectangle(cornerRadius: 8))
+                        settingPicker("Theme", selection: $theme, options: themes)
+                        settingPicker("Background", selection: $background, options: backgrounds)
+                        settingPicker("Accent", selection: $accent, options: accents)
                         VStack(alignment: .leading, spacing: 8) {
                             HStack {
                                 Text("Corner Radius")
@@ -37,13 +95,31 @@ struct WidgetStudioView: View {
                         }
                     }
                 }
+
+                if !drafts.isEmpty {
+                    SectionLabel(title: "Saved Drafts")
+                    GlassPanel {
+                        VStack(alignment: .leading, spacing: 10) {
+                            ForEach(drafts.prefix(5)) { draft in
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(draft.name)
+                                    Text("\(draft.components.count) components  \(draft.theme) / \(draft.background) / \(draft.accent)  Updated \(draft.updatedAt.formatted(date: .abbreviated, time: .shortened))")
+                                        .font(.caption)
+                                        .foregroundStyle(AppTheme.secondaryText)
+                                }
+                                Divider().background(AppTheme.hairline)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
             }
             .padding(16)
         }
         .navigationTitle("Widget Studio")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button { services.log("Widget template saved") } label: {
+                Button { saveDraft() } label: {
                     Image(systemName: "square.and.arrow.down")
                 }
             }
@@ -59,20 +135,19 @@ struct WidgetStudioView: View {
         let battery = metricValue("Battery")
         let thermal = metricValue("Thermal State")
         let storage = metricValue("Storage")
-        let wifi = services.network.status
         let trend = services.sensors.metrics.first(where: { $0.title == "Battery" })?.trend ?? []
 
         return VStack(spacing: 12) {
             HStack(spacing: 12) {
                 ZStack {
                     Circle()
-                        .stroke(.green.opacity(0.25), lineWidth: 8)
+                        .stroke(accentColor.opacity(0.25), lineWidth: 8)
                     Circle()
                         .trim(from: 0, to: batteryFraction)
-                        .stroke(.green, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                        .stroke(accentColor, style: StrokeStyle(lineWidth: 8, lineCap: .round))
                         .rotationEffect(.degrees(-90))
                     Image(systemName: "battery.100percent")
-                        .foregroundStyle(.green)
+                        .foregroundStyle(accentColor)
                 }
                 .frame(width: 54, height: 54)
 
@@ -90,27 +165,26 @@ struct WidgetStudioView: View {
                         .foregroundStyle(AppTheme.secondaryText)
                     Text(thermal)
                         .font(.headline)
-                    Sparkline(values: trend, tint: .green)
+                    Sparkline(values: trend, tint: accentColor)
                         .frame(width: 96, height: 28)
                 }
             }
 
             HStack(spacing: 8) {
-                smallWidgetMetric("Sensors", "\(services.sensors.metrics.count)", "waveform.path.ecg")
-                smallWidgetMetric("Network", wifi, "wifi")
-                smallWidgetMetric("Storage", storage, "internaldrive")
-                smallWidgetMetric("Interfaces", "\(services.network.activeInterfaces.count)", "network")
+                ForEach(components.prefix(4)) { component in
+                    smallWidgetMetric(component.title, valueForBinding(component.binding, fallback: storage), symbolForKind(component.kind))
+                }
             }
         }
         .padding(18)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+        .background(previewBackground, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: cornerRadius).stroke(AppTheme.hairline))
     }
 
     private func smallWidgetMetric(_ title: String, _ value: String, _ symbol: String) -> some View {
         VStack(alignment: .leading, spacing: 5) {
             Image(systemName: symbol)
-                .foregroundStyle(.blue)
+                .foregroundStyle(accentColor)
             Text(title)
                 .font(.caption2)
                 .foregroundStyle(AppTheme.secondaryText)
@@ -124,6 +198,7 @@ struct WidgetStudioView: View {
 
     private func componentButton(_ title: String, _ symbol: String) -> some View {
         Button {
+            components.append(WidgetDraftComponent(kind: title, binding: defaultBinding(for: title), title: title))
             services.log("Widget component added: \(title)")
         } label: {
             VStack(spacing: 6) {
@@ -138,15 +213,16 @@ struct WidgetStudioView: View {
         .buttonStyle(.bordered)
     }
 
-    private func settingRow(_ title: String, _ value: String) -> some View {
+    private func settingPicker(_ title: String, selection: Binding<String>, options: [String]) -> some View {
         HStack {
             Text(title)
             Spacer()
-            Text(value)
-                .foregroundStyle(AppTheme.secondaryText)
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundStyle(AppTheme.tertiaryText)
+            Picker(title, selection: selection) {
+                ForEach(options, id: \.self) { option in
+                    Text(option).tag(option)
+                }
+            }
+            .pickerStyle(.menu)
         }
     }
 
@@ -157,5 +233,89 @@ struct WidgetStudioView: View {
     private var batteryFraction: Double {
         let raw = metricValue("Battery").replacingOccurrences(of: "%", with: "")
         return min(1, max(0, (Double(raw) ?? 0) / 100))
+    }
+
+    private func defaultBinding(for title: String) -> String {
+        switch title {
+        case "Gauge": "sensor.battery"
+        case "Chart": "sensor.battery.trend"
+        case "Sensor": "sensor.count"
+        case "Image": "asset.local"
+        default: "text.custom"
+        }
+    }
+
+    private func valueForBinding(_ binding: String, fallback: String) -> String {
+        switch binding {
+        case "sensor.battery", "sensor.battery.trend":
+            metricValue("Battery")
+        case "network.status":
+            services.network.status
+        case "sensor.count":
+            "\(services.sensors.metrics.count)"
+        case "asset.local":
+            "Image"
+        case "text.custom":
+            "Text"
+        default:
+            fallback
+        }
+    }
+
+    private func symbolForKind(_ kind: String) -> String {
+        switch kind {
+        case "Gauge": "gauge.with.dots.needle.67percent"
+        case "Chart": "chart.xyaxis.line"
+        case "Sensor": "waveform.path.ecg"
+        case "Image": "photo"
+        case "Battery": "battery.100percent"
+        case "Network": "wifi"
+        default: "textformat"
+        }
+    }
+
+    private var accentColor: Color {
+        switch accent {
+        case "Green": .green
+        case "Orange": .orange
+        case "Pink": .pink
+        case "Purple": .purple
+        case "Cyan": .cyan
+        default: .blue
+        }
+    }
+
+    private var previewBackground: AnyShapeStyle {
+        switch background {
+        case "Graphite": AnyShapeStyle(Color(red: 0.12, green: 0.13, blue: 0.14))
+        case "Midnight": AnyShapeStyle(Color(red: 0.05, green: 0.07, blue: 0.12))
+        case "Glass": AnyShapeStyle(.regularMaterial)
+        case "High Contrast": AnyShapeStyle(Color.black)
+        default: AnyShapeStyle(.ultraThinMaterial)
+        }
+    }
+
+    private func saveDraft() {
+        let cleanName = draftName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let draft = WidgetDraft(
+            name: cleanName.isEmpty ? "Toolkit Widget \(drafts.count + 1)" : cleanName,
+            theme: theme,
+            background: background,
+            accent: accent,
+            cornerRadius: cornerRadius,
+            components: components,
+            updatedAt: Date()
+        )
+        drafts.removeAll { $0.name.caseInsensitiveCompare(draft.name) == .orderedSame }
+        drafts.insert(draft, at: 0)
+        drafts = Array(drafts.prefix(20))
+        AppPersistence.save(drafts, key: "widget.drafts")
+        if let data = try? JSONEncoder().encode(draft), let json = String(data: data, encoding: .utf8) {
+            UserDefaults.standard.set(data, forKey: "widget.latestDraft")
+            UserDefaults(suiteName: "group.com.personal.playgroundtoolkit")?.set(data, forKey: "widget.latestDraft")
+            services.log(json)
+        } else {
+            services.log("Widget draft saved")
+        }
     }
 }
