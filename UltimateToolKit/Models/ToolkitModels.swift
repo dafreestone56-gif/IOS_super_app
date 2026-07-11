@@ -21,77 +21,77 @@ enum ToolkitModule: String, CaseIterable, Identifiable, Hashable {
 
     var title: String {
         switch self {
-        case .bluetooth: "Bluetooth"
-        case .sensors: "Sensors"
-        case .wifi: "Wi-Fi"
-        case .nfc: "NFC"
-        case .automation: "Automation"
-        case .widgetStudio: "Widget Studio"
-        case .camera: "Camera"
-        case .network: "Network"
-        case .audio: "Audio"
-        case .haptics: "Haptics"
-        case .developerTools: "Developer Tools"
-        case .shortcuts: "Shortcuts"
-        case .ai: "AI Lab"
-        case .settings: "Settings"
+        case .bluetooth: return "Bluetooth"
+        case .sensors: return "Sensors"
+        case .wifi: return "Wi-Fi"
+        case .nfc: return "NFC"
+        case .automation: return "Automation"
+        case .widgetStudio: return "Widget Studio"
+        case .camera: return "Camera"
+        case .network: return "Network"
+        case .audio: return "Audio"
+        case .haptics: return "Haptics"
+        case .developerTools: return "Developer Tools"
+        case .shortcuts: return "Shortcuts"
+        case .ai: return "AI Lab"
+        case .settings: return "Settings"
         }
     }
 
     var subtitle: String {
         switch self {
-        case .bluetooth: "Scan and inspect BLE"
-        case .sensors: "Live device telemetry"
-        case .wifi: "Current network"
-        case .nfc: "Read and write tags"
-        case .automation: "Rules and triggers"
-        case .widgetStudio: "Design dashboards"
-        case .camera: "Vision and capture"
-        case .network: "Diagnostics and clients"
-        case .audio: "Waveform and speech"
-        case .haptics: "Pattern editor"
-        case .developerTools: "JSON, hashes, regex"
-        case .shortcuts: "AppIntents catalog"
-        case .ai: "Prompt and ML tools"
-        case .settings: "Privacy and data"
+        case .bluetooth: return "Scan and inspect BLE"
+        case .sensors: return "Live device telemetry"
+        case .wifi: return "Current network"
+        case .nfc: return "Read and write tags"
+        case .automation: return "Rules and triggers"
+        case .widgetStudio: return "Design dashboards"
+        case .camera: return "Vision and capture"
+        case .network: return "Diagnostics and clients"
+        case .audio: return "Waveform and speech"
+        case .haptics: return "Pattern editor"
+        case .developerTools: return "JSON, hashes, regex"
+        case .shortcuts: return "AppIntents catalog"
+        case .ai: return "Prompt and ML tools"
+        case .settings: return "Privacy and data"
         }
     }
 
     var statusText: String {
         switch self {
-        case .bluetooth: "Scan"
-        case .sensors: "Live"
-        case .wifi: "Network"
-        case .nfc: "Reader"
-        case .automation: "Rules"
-        case .widgetStudio: "Builder"
-        case .camera: "Capture"
-        case .network: "Tools"
-        case .audio: "Monitor"
-        case .haptics: "Editor"
-        case .developerTools: "Offline"
-        case .shortcuts: "Actions"
-        case .ai: "Opt-in"
-        case .settings: "Local"
+        case .bluetooth: return "Scan"
+        case .sensors: return "Live"
+        case .wifi: return "Network"
+        case .nfc: return "Reader"
+        case .automation: return "Rules"
+        case .widgetStudio: return "Builder"
+        case .camera: return "Capture"
+        case .network: return "Tools"
+        case .audio: return "Monitor"
+        case .haptics: return "Editor"
+        case .developerTools: return "Offline"
+        case .shortcuts: return "Actions"
+        case .ai: return "Opt-in"
+        case .settings: return "Local"
         }
     }
 
     var symbol: String {
         switch self {
-        case .bluetooth: "bolt.horizontal.circle.fill"
-        case .sensors: "waveform.path.ecg"
-        case .wifi: "wifi"
-        case .nfc: "wave.3.right.circle.fill"
-        case .automation: "gearshape.2.fill"
-        case .widgetStudio: "square.grid.2x2.fill"
-        case .camera: "camera.fill"
-        case .network: "network"
-        case .audio: "waveform"
-        case .haptics: "circle.hexagongrid.circle"
-        case .developerTools: "terminal.fill"
-        case .shortcuts: "point.3.connected.trianglepath.dotted"
-        case .ai: "sparkles"
-        case .settings: "gearshape.fill"
+        case .bluetooth: return "bolt.horizontal.circle.fill"
+        case .sensors: return "waveform.path.ecg"
+        case .wifi: return "wifi"
+        case .nfc: return "wave.3.right.circle.fill"
+        case .automation: return "gearshape.2.fill"
+        case .widgetStudio: return "square.grid.2x2.fill"
+        case .camera: return "camera.fill"
+        case .network: return "network"
+        case .audio: return "waveform"
+        case .haptics: return "circle.hexagongrid.circle"
+        case .developerTools: return "terminal.fill"
+        case .shortcuts: return "point.3.connected.trianglepath.dotted"
+        case .ai: return "sparkles"
+        case .settings: return "gearshape.fill"
         }
     }
 
@@ -355,24 +355,24 @@ enum DeveloperToolKind: String, CaseIterable, Identifiable {
     var needsAuxiliaryInput: Bool {
         switch self {
         case .regex, .hmacSHA256, .colorContrast, .textDiff:
-            true
+            return true
         default:
-            false
+            return false
         }
     }
 
     var auxiliaryPlaceholder: String {
         switch self {
         case .regex:
-            "Regex pattern"
+            return "Regex pattern"
         case .hmacSHA256:
-            "Secret key"
+            return "Secret key"
         case .colorContrast:
-            "Second hex color"
+            return "Second hex color"
         case .textDiff:
-            "Comparison text"
+            return "Comparison text"
         default:
-            "Options"
+            return "Options"
         }
     }
 }

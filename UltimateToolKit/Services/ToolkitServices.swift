@@ -398,21 +398,21 @@ final class SensorService: NSObject, ObservableObject, CLLocationManagerDelegate
 
     private static func batteryStateDescription(_ state: UIDevice.BatteryState) -> String {
         switch state {
-        case .unknown: "Battery state unavailable"
-        case .unplugged: "Running on battery"
-        case .charging: "Charging"
-        case .full: "Fully charged"
-        @unknown default: "Battery state unknown"
+        case .unknown: return "Battery state unavailable"
+        case .unplugged: return "Running on battery"
+        case .charging: return "Charging"
+        case .full: return "Fully charged"
+        @unknown default: return "Battery state unknown"
         }
     }
 
     private static func thermalDescription(_ state: ProcessInfo.ThermalState) -> String {
         switch state {
-        case .nominal: "Nominal"
-        case .fair: "Fair"
-        case .serious: "Serious"
-        case .critical: "Critical"
-        @unknown default: "Unknown"
+        case .nominal: return "Nominal"
+        case .fair: return "Fair"
+        case .serious: return "Serious"
+        case .critical: return "Critical"
+        @unknown default: return "Unknown"
         }
     }
 
@@ -425,12 +425,12 @@ final class SensorService: NSObject, ObservableObject, CLLocationManagerDelegate
 
     private static func authorizationDescription(_ status: CLAuthorizationStatus) -> String {
         switch status {
-        case .notDetermined: "Not requested"
-        case .restricted: "Restricted"
-        case .denied: "Denied"
-        case .authorizedAlways: "Always"
-        case .authorizedWhenInUse: "When in use"
-        @unknown default: "Unknown"
+        case .notDetermined: return "Not requested"
+        case .restricted: return "Restricted"
+        case .denied: return "Denied"
+        case .authorizedAlways: return "Always"
+        case .authorizedWhenInUse: return "When in use"
+        @unknown default: return "Unknown"
         }
     }
 }
@@ -442,11 +442,11 @@ extension Double {
 extension ProcessInfo.ThermalState {
     var severityValue: Int {
         switch self {
-        case .nominal: 0
-        case .fair: 1
-        case .serious: 2
-        case .critical: 3
-        @unknown default: 0
+        case .nominal: return 0
+        case .fair: return 1
+        case .serious: return 2
+        case .critical: return 3
+        @unknown default: return 0
         }
     }
 }
@@ -454,14 +454,14 @@ extension ProcessInfo.ThermalState {
 extension UIDeviceOrientation {
     var description: String {
         switch self {
-        case .portrait: "Portrait"
-        case .portraitUpsideDown: "Portrait upside down"
-        case .landscapeLeft: "Landscape left"
-        case .landscapeRight: "Landscape right"
-        case .faceUp: "Face up"
-        case .faceDown: "Face down"
-        case .unknown: "Unknown"
-        @unknown default: "Unknown"
+        case .portrait: return "Portrait"
+        case .portraitUpsideDown: return "Portrait upside down"
+        case .landscapeLeft: return "Landscape left"
+        case .landscapeRight: return "Landscape right"
+        case .faceUp: return "Face up"
+        case .faceDown: return "Face down"
+        case .unknown: return "Unknown"
+        @unknown default: return "Unknown"
         }
     }
 }

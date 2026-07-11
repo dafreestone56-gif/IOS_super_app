@@ -150,11 +150,11 @@ struct CameraView: View {
 
     private var permissionText: String {
         switch permissionStatus {
-        case .authorized: camera.isRunning ? "Camera preview running" : "Camera access authorized"
-        case .denied: "Camera access denied"
-        case .restricted: "Camera access restricted"
-        case .notDetermined: "Camera permission not requested"
-        @unknown default: "Camera status unknown"
+        case .authorized: return camera.isRunning ? "Camera preview running" : "Camera access authorized"
+        case .denied: return "Camera access denied"
+        case .restricted: return "Camera access restricted"
+        case .notDetermined: return "Camera permission not requested"
+        @unknown default: return "Camera status unknown"
         }
     }
 

@@ -10,13 +10,13 @@ struct SensorsView: View {
     private var visibleMetrics: [SensorMetric] {
         switch filter {
         case "Motion":
-            services.sensors.metrics.filter { ["Accelerometer", "Gyroscope", "Magnetometer", "Device Motion", "Heading", "Orientation"].contains($0.title) }
+            return services.sensors.metrics.filter { ["Accelerometer", "Gyroscope", "Magnetometer", "Device Motion", "Heading", "Orientation"].contains($0.title) }
         case "Environment":
-            services.sensors.metrics.filter { ["Thermal State", "Barometer", "Display", "Proximity"].contains($0.title) }
+            return services.sensors.metrics.filter { ["Thermal State", "Barometer", "Display", "Proximity"].contains($0.title) }
         case "Device":
-            services.sensors.metrics.filter { ["Battery", "Memory", "Storage", "Location"].contains($0.title) }
+            return services.sensors.metrics.filter { ["Battery", "Memory", "Storage", "Location"].contains($0.title) }
         default:
-            services.sensors.metrics
+            return services.sensors.metrics
         }
     }
 

@@ -237,40 +237,40 @@ struct WidgetStudioView: View {
 
     private func defaultBinding(for title: String) -> String {
         switch title {
-        case "Gauge": "sensor.battery"
-        case "Chart": "sensor.battery.trend"
-        case "Sensor": "sensor.count"
-        case "Image": "asset.local"
-        default: "text.custom"
+        case "Gauge": return "sensor.battery"
+        case "Chart": return "sensor.battery.trend"
+        case "Sensor": return "sensor.count"
+        case "Image": return "asset.local"
+        default: return "text.custom"
         }
     }
 
     private func valueForBinding(_ binding: String, fallback: String) -> String {
         switch binding {
         case "sensor.battery", "sensor.battery.trend":
-            metricValue("Battery")
+            return metricValue("Battery")
         case "network.status":
-            services.network.status
+            return services.network.status
         case "sensor.count":
-            "\(services.sensors.metrics.count)"
+            return "\(services.sensors.metrics.count)"
         case "asset.local":
-            "Image"
+            return "Image"
         case "text.custom":
-            "Text"
+            return "Text"
         default:
-            fallback
+            return fallback
         }
     }
 
     private func symbolForKind(_ kind: String) -> String {
         switch kind {
-        case "Gauge": "gauge.with.dots.needle.67percent"
-        case "Chart": "chart.xyaxis.line"
-        case "Sensor": "waveform.path.ecg"
-        case "Image": "photo"
-        case "Battery": "battery.100percent"
-        case "Network": "wifi"
-        default: "textformat"
+        case "Gauge": return "gauge.with.dots.needle.67percent"
+        case "Chart": return "chart.xyaxis.line"
+        case "Sensor": return "waveform.path.ecg"
+        case "Image": return "photo"
+        case "Battery": return "battery.100percent"
+        case "Network": return "wifi"
+        default: return "textformat"
         }
     }
 
@@ -287,11 +287,11 @@ struct WidgetStudioView: View {
 
     private var previewBackground: AnyShapeStyle {
         switch background {
-        case "Graphite": AnyShapeStyle(Color(red: 0.12, green: 0.13, blue: 0.14))
-        case "Midnight": AnyShapeStyle(Color(red: 0.05, green: 0.07, blue: 0.12))
-        case "Glass": AnyShapeStyle(.regularMaterial)
-        case "High Contrast": AnyShapeStyle(Color.black)
-        default: AnyShapeStyle(.ultraThinMaterial)
+        case "Graphite": return AnyShapeStyle(Color(red: 0.12, green: 0.13, blue: 0.14))
+        case "Midnight": return AnyShapeStyle(Color(red: 0.05, green: 0.07, blue: 0.12))
+        case "Glass": return AnyShapeStyle(.regularMaterial)
+        case "High Contrast": return AnyShapeStyle(Color.black)
+        default: return AnyShapeStyle(.ultraThinMaterial)
         }
     }
 

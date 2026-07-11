@@ -201,22 +201,22 @@ struct AutomationView: View {
 
     private var symbolForSelectedTrigger: String {
         switch selectedTrigger {
-        case "Battery below threshold": "battery.25"
-        case "Network offline": "wifi.slash"
-        case "NFC tag scanned": "wave.3.right.circle.fill"
-        case "BLE device discovered": "bolt.horizontal.circle.fill"
-        case "Time scheduled": "clock"
-        default: "gearshape.2.fill"
+        case "Battery below threshold": return "battery.25"
+        case "Network offline": return "wifi.slash"
+        case "NFC tag scanned": return "wave.3.right.circle.fill"
+        case "BLE device discovered": return "bolt.horizontal.circle.fill"
+        case "Time scheduled": return "clock"
+        default: return "gearshape.2.fill"
         }
     }
 
     private var tintForSelectedTrigger: String {
         switch selectedTrigger {
-        case "Battery below threshold": "orange"
-        case "Network offline": "blue"
-        case "NFC tag scanned": "orange"
-        case "BLE device discovered": "blue"
-        default: "purple"
+        case "Battery below threshold": return "orange"
+        case "Network offline": return "blue"
+        case "NFC tag scanned": return "orange"
+        case "BLE device discovered": return "blue"
+        default: return "purple"
         }
     }
 }

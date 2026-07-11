@@ -143,30 +143,30 @@ struct SettingsView: View {
 
     private var cameraStatus: String {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
-        case .authorized: "Authorized"
-        case .denied: "Denied"
-        case .restricted: "Restricted"
-        case .notDetermined: "Not requested"
-        @unknown default: "Unknown"
+        case .authorized: return "Authorized"
+        case .denied: return "Denied"
+        case .restricted: return "Restricted"
+        case .notDetermined: return "Not requested"
+        @unknown default: return "Unknown"
         }
     }
 
     private var locationStatus: String {
         switch CLLocationManager().authorizationStatus {
-        case .authorizedAlways: "Always"
-        case .authorizedWhenInUse: "When in use"
-        case .denied: "Denied"
-        case .restricted: "Restricted"
-        case .notDetermined: "Not requested"
-        @unknown default: "Unknown"
+        case .authorizedAlways: return "Always"
+        case .authorizedWhenInUse: return "When in use"
+        case .denied: return "Denied"
+        case .restricted: return "Restricted"
+        case .notDetermined: return "Not requested"
+        @unknown default: return "Unknown"
         }
     }
 
     private var nfcStatus: String {
         #if canImport(CoreNFC)
-        NFCNDEFReaderSession.readingAvailable ? "Available" : "Unavailable"
+        return NFCNDEFReaderSession.readingAvailable ? "Available" : "Unavailable"
         #else
-        "Unavailable"
+        return "Unavailable"
         #endif
     }
 }

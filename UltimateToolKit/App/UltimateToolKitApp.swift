@@ -25,21 +25,21 @@ enum MainTab: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .home: "Home"
-        case .automation: "Automation"
-        case .shortcuts: "Shortcuts"
-        case .widgets: "Widgets"
-        case .more: "More"
+        case .home: return "Home"
+        case .automation: return "Automation"
+        case .shortcuts: return "Shortcuts"
+        case .widgets: return "Widgets"
+        case .more: return "More"
         }
     }
 
     var symbol: String {
         switch self {
-        case .home: "house.fill"
-        case .automation: "gearshape.2"
-        case .shortcuts: "point.3.connected.trianglepath.dotted"
-        case .widgets: "square.grid.2x2"
-        case .more: "ellipsis"
+        case .home: return "house.fill"
+        case .automation: return "gearshape.2"
+        case .shortcuts: return "point.3.connected.trianglepath.dotted"
+        case .widgets: return "square.grid.2x2"
+        case .more: return "ellipsis"
         }
     }
 }

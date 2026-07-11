@@ -809,11 +809,11 @@ struct ToolkitShortcutsProvider: AppShortcutsProvider {
 extension ProcessInfo.ThermalState {
     var shortDescription: String {
         switch self {
-        case .nominal: "Nominal"
-        case .fair: "Fair"
-        case .serious: "Serious"
-        case .critical: "Critical"
-        @unknown default: "Unknown"
+        case .nominal: return "Nominal"
+        case .fair: return "Fair"
+        case .serious: return "Serious"
+        case .critical: return "Critical"
+        @unknown default: return "Unknown"
         }
     }
 }

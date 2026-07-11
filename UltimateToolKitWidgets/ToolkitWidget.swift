@@ -102,10 +102,10 @@ struct ToolkitWidgetEntryView: View {
             return draft.name
         }
         switch entry.configuration.display {
-        case .system: "System"
-        case .sensors: "Sensors"
-        case .network: "Network"
-        case .shortcuts: "Shortcuts"
+        case .system: return "System"
+        case .sensors: return "Sensors"
+        case .network: return "Network"
+        case .shortcuts: return "Shortcuts"
         }
     }
 
@@ -114,31 +114,31 @@ struct ToolkitWidgetEntryView: View {
             return "\(draft.components.count) saved component\(draft.components.count == 1 ? "" : "s")"
         }
         switch entry.configuration.display {
-        case .system: "Device toolkit ready"
-        case .sensors: "Start live logging"
-        case .network: "Run diagnostics"
-        case .shortcuts: "Connector actions"
+        case .system: return "Device toolkit ready"
+        case .sensors: return "Start live logging"
+        case .network: return "Run diagnostics"
+        case .shortcuts: return "Connector actions"
         }
     }
 
     private var icon: String {
         switch entry.configuration.display {
-        case .system: "iphone.gen3"
-        case .sensors: "waveform.path.ecg"
-        case .network: "network"
-        case .shortcuts: "point.3.connected.trianglepath.dotted"
+        case .system: return "iphone.gen3"
+        case .sensors: return "waveform.path.ecg"
+        case .network: return "network"
+        case .shortcuts: return "point.3.connected.trianglepath.dotted"
         }
     }
 
     private var tint: Color {
         if let accent = entry.draft?.accent, entry.configuration.display == .system {
             switch accent {
-            case "Green": return .green
-            case "Orange": return .orange
-            case "Pink": return .pink
-            case "Purple": return .purple
-            case "Cyan": return .cyan
-            default: return .blue
+            case "Green": return Color.green
+            case "Orange": return Color.orange
+            case "Pink": return Color.pink
+            case "Purple": return Color.purple
+            case "Cyan": return Color.cyan
+            default: return Color.blue
             }
         }
         switch entry.configuration.display {
