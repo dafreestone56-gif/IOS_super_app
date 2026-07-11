@@ -677,17 +677,12 @@ struct OpenToolkitIntent: AppIntent {
 @available(iOS 16.0, *)
 struct ToolkitShortcutsProvider: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
+        // Apple allows at most 10 visible App Shortcuts per app. Keep the rest as searchable AppIntents.
         AppShortcut(
             intent: GetDeviceSummaryIntent(),
             phrases: ["Get device summary in \(.applicationName)"],
             shortTitle: "Device Summary",
             systemImageName: "iphone.gen3"
-        )
-        AppShortcut(
-            intent: GetBatteryLevelIntent(),
-            phrases: ["Get battery level in \(.applicationName)"],
-            shortTitle: "Battery",
-            systemImageName: "battery.100"
         )
         AppShortcut(
             intent: GetSensorLogSummaryIntent(),
@@ -708,28 +703,10 @@ struct ToolkitShortcutsProvider: AppShortcutsProvider {
             systemImageName: "curlybraces"
         )
         AppShortcut(
-            intent: SHA256HashIntent(),
-            phrases: ["Hash text in \(.applicationName)"],
-            shortTitle: "SHA-256",
-            systemImageName: "number"
-        )
-        AppShortcut(
-            intent: Base64EncodeIntent(),
-            phrases: ["Base64 encode in \(.applicationName)"],
-            shortTitle: "Base64",
-            systemImageName: "textformat.abc"
-        )
-        AppShortcut(
             intent: HTTPRequestIntent(),
             phrases: ["Run HTTP request in \(.applicationName)"],
             shortTitle: "HTTP",
             systemImageName: "network"
-        )
-        AppShortcut(
-            intent: DNSLookupIntent(),
-            phrases: ["Look up DNS in \(.applicationName)"],
-            shortTitle: "DNS",
-            systemImageName: "magnifyingglass"
         )
         AppShortcut(
             intent: TCPProbeIntent(),
@@ -738,28 +715,10 @@ struct ToolkitShortcutsProvider: AppShortcutsProvider {
             systemImageName: "rectangle.connected.to.line.below"
         )
         AppShortcut(
-            intent: GetLastNFCTagIntent(),
-            phrases: ["Get last NFC tag in \(.applicationName)"],
-            shortTitle: "Last NFC",
-            systemImageName: "wave.3.right.circle"
-        )
-        AppShortcut(
             intent: GetNFCReaderStatusIntent(),
             phrases: ["Check NFC reader in \(.applicationName)"],
             shortTitle: "NFC Status",
             systemImageName: "checklist.checked"
-        )
-        AppShortcut(
-            intent: PlayHapticIntent(),
-            phrases: ["Play haptic in \(.applicationName)"],
-            shortTitle: "Haptic",
-            systemImageName: "waveform.path"
-        )
-        AppShortcut(
-            intent: ListHapticSequencesIntent(),
-            phrases: ["List haptic sequences in \(.applicationName)"],
-            shortTitle: "Haptics List",
-            systemImageName: "list.bullet"
         )
         AppShortcut(
             intent: PlaySavedHapticSequenceIntent(),
@@ -778,30 +737,6 @@ struct ToolkitShortcutsProvider: AppShortcutsProvider {
             phrases: ["Run automation rule in \(.applicationName)"],
             shortTitle: "Run Rule",
             systemImageName: "gearshape.2"
-        )
-        AppShortcut(
-            intent: OpenToolkitIntent(module: "Bluetooth"),
-            phrases: ["Open Bluetooth in \(.applicationName)"],
-            shortTitle: "Bluetooth",
-            systemImageName: "bolt.horizontal.circle"
-        )
-        AppShortcut(
-            intent: OpenToolkitIntent(module: "Sensors"),
-            phrases: ["Open sensors in \(.applicationName)"],
-            shortTitle: "Sensors",
-            systemImageName: "waveform.path.ecg"
-        )
-        AppShortcut(
-            intent: OpenToolkitIntent(module: "Camera"),
-            phrases: ["Open camera tools in \(.applicationName)"],
-            shortTitle: "Camera",
-            systemImageName: "camera"
-        )
-        AppShortcut(
-            intent: OpenToolkitIntent(module: "Widget Studio"),
-            phrases: ["Open Widget Studio in \(.applicationName)"],
-            shortTitle: "Widget Studio",
-            systemImageName: "square.grid.2x2"
         )
     }
 }
