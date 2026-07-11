@@ -201,21 +201,7 @@ struct HapticsView: View {
     }
 
     private var sequenceTimeline: some View {
-        HStack(alignment: .bottom, spacing: 7) {
-            ForEach(steps) { step in
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(Color.purple.opacity(0.22 + min(0.7, step.intensity * 0.7)))
-                    .frame(width: max(12, 14 + step.delay * 65), height: CGFloat(20 + step.intensity * 62))
-                    .overlay(alignment: .top) {
-                        Capsule()
-                            .fill(Color.white.opacity(0.32 + step.sharpness * 0.45))
-                            .frame(height: 4)
-                    }
-            }
-        }
-        .frame(maxWidth: .infinity, minHeight: 94, alignment: .bottomLeading)
-        .padding(10)
-        .background(Color.black.opacity(0.26), in: RoundedRectangle(cornerRadius: 8))
+        HapticTimelineView(steps: steps)
     }
 
     private func slider(_ title: String, value: Binding<Double>) -> some View {
@@ -277,6 +263,52 @@ struct HapticsView: View {
         sequenceName = sequence.name
         steps = sequence.steps
         services.log("Haptic sequence loaded: \(sequence.name)")
+    }
+}
+
+private struct HapticTimelineView: View {
+    let steps: [HapticStep]
+
+    var body: some View {
+        HStack(alignment: .bottom, spacing: 7) {
+            ForEach(steps) { step in
+                HapticTimelineBar(step: step)
+            }
+        }
+        .frame(maxWidth: .infinity, minHeight: 94, alignment: .bottomLeading)
+        .padding(10)
+        .background(Color.black.opacity(0.26), in: RoundedRectangle(cornerRadius: 8))
+    }
+}
+
+private struct HapticTimelineBar: View {
+    let step: HapticStep
+
+    private var fillOpacity: Double {
+        return 0.22 + Swift.min(0.7, step.intensity * 0.7)
+    }
+
+    private var capOpacity: Double {
+        return 0.32 + step.sharpness * 0.45
+    }
+
+    private var barWidth: CGFloat {
+        return CGFloat(Swift.max(12.0, 14.0 + step.delay * 65.0))
+    }
+
+    private var barHeight: CGFloat {
+        return CGFloat(20.0 + step.intensity * 62.0)
+    }
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: 4)
+            .fill(Color.purple.opacity(fillOpacity))
+            .frame(width: barWidth, height: barHeight)
+            .overlay(alignment: .top) {
+                Capsule()
+                    .fill(Color.white.opacity(capOpacity))
+                    .frame(height: 4)
+            }
     }
 }
 
