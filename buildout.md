@@ -20,8 +20,8 @@ Required upkeep:
 ## Current Execution State
 
 - Current phase: Live hardware iteration and QA handoff
-- Current step: Rebuild and retest after patching instant Sensors and Widget Studio crashes, then validate live sensor logging, NFC signing diagnostics, saved haptic sequences, expanded Shortcuts connectors, and embedded WidgetKit extension on iOS 26 hardware
-- Overall status: Expanded local prototype now includes session-based sensor logging/charts, broad AppIntents connectors, haptic sequence persistence, improved NFC diagnostics, and a real WidgetKit extension target; latest device crash report was traced to the shared sensor startup path and hardened locally
+- Current step: Rebuild and retest after patching app-wide live refresh, widget editor flexibility, App Group widget sharing, and embedded extension signing metadata
+- Overall status: Expanded local prototype now includes session-based sensor logging/charts, broad AppIntents connectors, haptic sequence persistence, improved NFC diagnostics, and a WidgetKit extension target; latest device feedback identified a root ObservableObject refresh gap plus missing widget/App Group signing wiring, both now patched locally
 - Last updated: 2026-07-11
 - Source plan: `Plan.md`
 - UI reference: `UI UX.png`
@@ -66,6 +66,11 @@ Required upkeep:
 - [x] Fixed follow-up GitHub Actions AI Lab missing-return failure and cleaned related widget AppIntent/concurrency warnings from supplied logs
 - [x] Fixed follow-up GitHub Actions AppIntents metadata failure by reducing visible App Shortcuts from 21 to Apple's hard limit of 10 while retaining all AppIntent action types
 - [x] Fixed likely instant Sensors and Widget Studio crash by adding `NSMotionUsageDescription`, avoiding full sensor stream startup in Widget Studio, stabilizing sensor metric IDs, and filtering non-finite graph/log values
+- [x] Fixed app-wide stale UI refresh by relaying child service `ObservableObject` updates through `ToolkitServices`
+- [x] Expanded Widget Studio to support a blank/removable canvas, more component types, reordering, draft load/use/delete actions, and WidgetKit timeline reloads
+- [x] Added App Group entitlements for host app and widget extension so saved widget drafts can be shared with the home-screen widget
+- [x] Added `CodeSignOnCopy` and widget extension entitlements to the Xcode project so the embedded `.appex` can be signed and discovered by iOS
+- [x] Added GitHub Actions packaging assertion that fails if `UltimateToolKitWidgets.appex` is missing from the unsigned IPA payload
 
 ## In Progress
 
@@ -79,14 +84,15 @@ Required upkeep:
 - [x] Implement design system matching `UI UX.png`
 - [~] Run `xcodebuild` on macOS or GitHub Actions
 - [~] Resolve any Xcode/iOS 26 SDK compile issues found by CI
-- [ ] Confirm WidgetKit extension is present inside the generated unsigned IPA payload
-- [ ] Verify WidgetKit widget appears in iOS Home Screen widget gallery after sideload/signing
+- [ ] Confirm WidgetKit extension is present inside the generated unsigned IPA payload and signed with its own widget provisioning profile
+- [ ] Verify WidgetKit widget appears in iOS Home Screen widget gallery after sideload/signing with App Groups enabled
 - [ ] Verify expanded AppIntents appear in Apple Shortcuts on iOS 26
 - [ ] Verify live sensor logging captures accelerometer, gyro, magnetometer, pressure, heading, and location streams on device
 - [ ] Verify saved haptic sequences can be played from Apple Shortcuts
 - [ ] Sign the unsigned IPA during sideloading
 - [ ] Run real-device QA on iOS 26 for BLE, NFC, camera, microphone/audio, haptics, and permissions
 - [ ] Confirm provisioning profile includes NFC reader session entitlement
+- [ ] Confirm provisioning profiles include App Group `group.com.personal.playgroundtoolkit` for both app and widget extension
 
 ## Blocked / Needs Input
 
@@ -736,6 +742,7 @@ Each module under `Docs/Modules/` should include:
 | 2026-07-09 | Set Swift strict concurrency checking to minimal | Delegate-heavy CoreBluetooth/CoreNFC/AVFoundation prototypes use callback bridges that should be hardened after CI confirms compile behavior |
 | 2026-07-10 | Use Swift 5 language mode for the GitHub Actions prototype build | This is more compatible across GitHub-hosted Xcode runners while retaining modern Swift syntax supported by current compilers |
 | 2026-07-10 | Keep the first WidgetKit extension free of App Group entitlements | A widget target can appear on the Home Screen without adding an App Group signing requirement that could break unsigned/personal sideload builds |
+| 2026-07-11 | Add App Group entitlements to the app and widget extension after device feedback | User wants Widget Studio drafts to drive an actual Home Screen widget, which requires shared storage between the host app and extension |
 | 2026-07-10 | Treat NFC `readingAvailable == false` as a signing/capability diagnostic, not a started read session | User device reported NFC unavailable after a requested scan; the app now distinguishes availability failure from active session flow |
 | 2026-07-10 | Persist haptic sequences and sensor logs through existing `AppPersistence` keys | Shortcuts can only reliably operate on stored app state, so named sequences and last logging sessions must be durable |
 
@@ -759,6 +766,8 @@ Each module under `Docs/Modules/` should include:
 | 2026-07-10 | Fixed AI Lab missing-return failure from uploaded GitHub Actions logs | Added explicit return for the local AI draft multiline string, made the widget display AppIntent parameter optional, and removed a future Swift concurrency warning in HTTP history recording |
 | 2026-07-11 | Fixed App Shortcuts metadata export failure from uploaded GitHub Actions logs | Curated the visible App Shortcuts catalog to 10 entries, preserving the remaining AppIntent actions for manual Shortcuts use |
 | 2026-07-11 | Hardened Sensors and Widget Studio startup after real-device crash feedback | Added the required motion privacy string, made Widget Studio use a lightweight sensor snapshot, gave live sensor metrics stable IDs, and sanitized graph/log values |
+| 2026-07-11 | Fixed stale live refresh and widget install/customization gaps from device feedback | Relayed service updates through the root environment object, removed hard-coded preview tiles, expanded Widget Studio draft controls, added App Group sharing, and enabled code signing on copy for the embedded widget extension |
+| 2026-07-11 | Added widget payload verification to the unsigned IPA workflow | CI now asserts the built `.app` includes `PlugIns/UltimateToolKitWidgets.appex` before uploading the IPA artifact |
 
 ## Deferred / Research Only
 

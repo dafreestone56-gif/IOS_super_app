@@ -56,7 +56,9 @@ struct ToolkitWidgetProvider: AppIntentTimelineProvider {
     }
 
     private func loadDraft() -> SharedWidgetDraft? {
-        guard let data = UserDefaults(suiteName: "group.com.personal.playgroundtoolkit")?.data(forKey: "widget.latestDraft") else {
+        let sharedData = UserDefaults(suiteName: "group.com.personal.playgroundtoolkit")?.data(forKey: "widget.latestDraft")
+        let fallbackData = UserDefaults.standard.data(forKey: "widget.latestDraft")
+        guard let data = sharedData ?? fallbackData else {
             return nil
         }
         return try? JSONDecoder().decode(SharedWidgetDraft.self, from: data)
@@ -84,7 +86,19 @@ struct ToolkitWidgetEntryView: View {
                 .lineLimit(2)
                 .minimumScaleFactor(0.75)
 
-            if family != .systemSmall {
+            if let draft = entry.draft, entry.configuration.resolvedDisplay == .system, !draft.components.isEmpty {
+                if family == .systemSmall || family == .accessoryRectangular {
+                    let component = draft.components[0]
+                    miniMetric(component.title, componentValue(component), symbolForKind(component.kind))
+                } else {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 72), spacing: 6)], spacing: 6) {
+                        ForEach(0..<min(draft.components.count, 4), id: \.self) { index in
+                            let component = draft.components[index]
+                            miniMetric(component.title, componentValue(component), symbolForKind(component.kind))
+                        }
+                    }
+                }
+            } else if family != .systemSmall {
                 HStack(spacing: 8) {
                     miniMetric("Updated", entry.date.formatted(date: .omitted, time: .shortened), "clock")
                     miniMetric(entry.draft == nil ? "Mode" : "Draft", entry.draft?.theme ?? title, icon)
@@ -115,13 +129,47 @@ struct ToolkitWidgetEntryView: View {
 
     private var primary: String {
         if let draft = entry.draft, entry.configuration.resolvedDisplay == .system {
-            return "\(draft.components.count) saved component\(draft.components.count == 1 ? "" : "s")"
+            return draft.components.isEmpty ? "Blank widget" : draft.theme
         }
         switch entry.configuration.resolvedDisplay {
         case .system: return "Device toolkit ready"
         case .sensors: return "Start live logging"
         case .network: return "Run diagnostics"
         case .shortcuts: return "Connector actions"
+        }
+    }
+
+    private func componentValue(_ component: SharedWidgetComponent) -> String {
+        switch component.binding {
+        case "sensor.battery": return "Battery"
+        case "sensor.battery.trend": return "Trend"
+        case "sensor.thermal": return "Thermal"
+        case "sensor.storage": return "Storage"
+        case "sensor.count": return "Sensors"
+        case "sensor.location": return "Location"
+        case "network.status": return "Network"
+        case "nfc.status": return "NFC"
+        case "haptics.count": return "Saved"
+        case "asset.local": return "Image"
+        case "text.custom": return "Custom"
+        default: return component.kind
+        }
+    }
+
+    private func symbolForKind(_ kind: String) -> String {
+        switch kind {
+        case "Gauge": return "gauge.with.dots.needle.67percent"
+        case "Chart": return "chart.xyaxis.line"
+        case "Sensor": return "waveform.path.ecg"
+        case "Image": return "photo"
+        case "Battery": return "battery.100percent"
+        case "Network": return "wifi"
+        case "Thermal": return "thermometer.medium"
+        case "Storage": return "internaldrive"
+        case "Location": return "location"
+        case "NFC": return "wave.3.right"
+        case "Haptics": return "waveform.path"
+        default: return "textformat"
         }
     }
 

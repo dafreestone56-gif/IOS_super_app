@@ -48,6 +48,8 @@ jobs:
           rm -rf build/Payload
           mkdir -p build/Payload
           cp -R "$APP_PATH" build/Payload/
+          APP_BUNDLE="$(basename "$APP_PATH")"
+          test -d "build/Payload/$APP_BUNDLE/PlugIns/UltimateToolKitWidgets.appex"
           (cd build && zip -qry UltimateToolKit-unsigned.ipa Payload)
 
       - name: Upload unsigned IPA

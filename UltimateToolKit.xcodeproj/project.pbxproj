@@ -29,7 +29,7 @@
 		001000000000000000000014 /* HapticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 002000000000000000000017 /* HapticsView.swift */; };
 		001000000000000000000015 /* AIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 002000000000000000000018 /* AIView.swift */; };
 		001000000000000000000016 /* ToolkitWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 002000000000000000000020 /* ToolkitWidget.swift */; };
-		001000000000000000000017 /* UltimateToolKitWidgets.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 002000000000000000000022 /* UltimateToolKitWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		001000000000000000000017 /* UltimateToolKitWidgets.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 002000000000000000000022 /* UltimateToolKitWidgets.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -566,6 +566,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = UltimateToolKitWidgets/UltimateToolKitWidgets.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
@@ -592,6 +593,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = UltimateToolKitWidgets/UltimateToolKitWidgets.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";

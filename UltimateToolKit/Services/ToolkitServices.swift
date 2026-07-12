@@ -28,10 +28,30 @@ final class ToolkitServices: ObservableObject {
     let automations = AutomationService()
     let audio = AudioService()
     let utilities = DeveloperUtilityService()
+    private var cancellables: Set<AnyCancellable> = []
+
+    init() {
+        relayChanges(from: sensors.objectWillChange)
+        relayChanges(from: bluetooth.objectWillChange)
+        relayChanges(from: network.objectWillChange)
+        relayChanges(from: nfc.objectWillChange)
+        relayChanges(from: automations.objectWillChange)
+        relayChanges(from: audio.objectWillChange)
+    }
 
     func log(_ message: String, level: LogEntry.Level = .info) {
         logs.insert(LogEntry(date: Date(), level: level, message: message), at: 0)
         logs = Array(logs.prefix(120))
+    }
+
+    private func relayChanges(from publisher: ObservableObjectPublisher) {
+        publisher
+            .sink { [weak self] _ in
+                Task { @MainActor in
+                    self?.objectWillChange.send()
+                }
+            }
+            .store(in: &cancellables)
     }
 }
 
@@ -1234,7 +1254,7 @@ final class NFCService: NSObject, ObservableObject {
         #if targetEnvironment(simulator)
         return "The iOS simulator cannot scan NFC tags. Test this module on a physical NFC-capable iPhone."
         #else
-        return "CoreNFC reports NFC reading is unavailable. On a physical iPhone this usually means the app was signed without the NFC Tag Reading capability or without the NFC reader session formats entitlement in the provisioning profile."
+        return "CoreNFC reports NFC reading is unavailable. On a physical iPhone, confirm the signed app profile includes NFC Tag Reading and com.apple.developer.nfc.readersession.formats values NDEF and TAG."
         #endif
         #else
         return "CoreNFC was not linked into this build."

@@ -15,6 +15,15 @@ xcodebuild -project UltimateToolKit.xcodeproj -scheme UltimateToolKit -configura
 The workflow packages the resulting `.app` into `UltimateToolKit-unsigned.ipa` for user-side signing.
 It also attempts unit tests on the first available iPhone simulator in the macOS runner.
 
+## Sideload Signing Requirements
+
+The unsigned IPA contains an app target and a WidgetKit extension target. When signing for device install, sign both:
+
+- `com.personal.playgroundtoolkit`
+- `com.personal.playgroundtoolkit.widgets`
+
+The host app provisioning profile needs NFC Tag Reading with `NDEF` and `TAG` reader session formats. The host app and widget extension profiles both need the App Group `group.com.personal.playgroundtoolkit`; otherwise NFC will report unavailable and the widget may not appear or receive Widget Studio drafts.
+
 ## Current Scope
 
 - SwiftUI app shell with Home, Automation, Shortcuts, Widgets, and More tabs.

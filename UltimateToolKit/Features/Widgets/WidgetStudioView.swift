@@ -1,4 +1,5 @@
 import SwiftUI
+import WidgetKit
 
 struct WidgetStudioView: View {
     @EnvironmentObject private var services: ToolkitServices
@@ -12,9 +13,11 @@ struct WidgetStudioView: View {
         WidgetDraftComponent(kind: "Network", binding: "network.status", title: "Network")
     ]
     @State private var drafts: [WidgetDraft] = AppPersistence.load([WidgetDraft].self, key: "widget.drafts", fallback: [])
+    @State private var selectedDraftID: UUID?
     private let themes = ["System", "Compact", "Instrument", "Terminal"]
     private let backgrounds = ["Blur", "Graphite", "Midnight", "Glass", "High Contrast"]
     private let accents = ["Blue", "Green", "Orange", "Pink", "Purple", "Cyan"]
+    private let componentChoices = ["Text", "Battery", "Thermal", "Storage", "Network", "Gauge", "Chart", "Sensor", "Location", "NFC", "Haptics", "Image"]
 
     var body: some View {
         ScrollView {
@@ -39,19 +42,38 @@ struct WidgetStudioView: View {
 
                 SectionLabel(title: "Add Component")
                 GlassPanel {
-                    HStack(spacing: 10) {
-                        componentButton("Text", "textformat")
-                        componentButton("Gauge", "gauge.with.dots.needle.67percent")
-                        componentButton("Chart", "chart.xyaxis.line")
-                        componentButton("Sensor", "waveform.path.ecg")
-                        componentButton("Image", "photo")
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 86), spacing: 8)], spacing: 8) {
+                        ForEach(componentChoices, id: \.self) { choice in
+                            componentButton(choice, symbolForKind(choice))
+                        }
                     }
                 }
 
-                if !components.isEmpty {
-                    SectionLabel(title: "Components")
-                    GlassPanel {
-                        VStack(spacing: 0) {
+                SectionLabel(title: "Components")
+                GlassPanel {
+                    VStack(spacing: 0) {
+                        HStack {
+                            Text("\(components.count) active")
+                                .font(.caption)
+                                .foregroundStyle(AppTheme.secondaryText)
+                            Spacer()
+                            Button {
+                                components.removeAll()
+                            } label: {
+                                Image(systemName: "trash.slash")
+                            }
+                            .buttonStyle(.bordered)
+                            .disabled(components.isEmpty)
+                            .accessibilityLabel("Clear components")
+                        }
+                        .padding(.bottom, components.isEmpty ? 0 : 8)
+
+                        if components.isEmpty {
+                            Text("Add any components above to build the widget from a blank canvas.")
+                                .font(.caption)
+                                .foregroundStyle(AppTheme.secondaryText)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        } else {
                             ForEach(components) { component in
                                 HStack {
                                     VStack(alignment: .leading, spacing: 3) {
@@ -62,11 +84,28 @@ struct WidgetStudioView: View {
                                     }
                                     Spacer()
                                     Button {
+                                        moveComponent(component, by: -1)
+                                    } label: {
+                                        Image(systemName: "chevron.up")
+                                    }
+                                    .buttonStyle(.bordered)
+                                    .disabled(componentIndex(component) == 0)
+                                    .accessibilityLabel("Move \(component.title) up")
+                                    Button {
+                                        moveComponent(component, by: 1)
+                                    } label: {
+                                        Image(systemName: "chevron.down")
+                                    }
+                                    .buttonStyle(.bordered)
+                                    .disabled(componentIndex(component) == components.count - 1)
+                                    .accessibilityLabel("Move \(component.title) down")
+                                    Button {
                                         components.removeAll { $0.id == component.id }
                                     } label: {
                                         Image(systemName: "trash")
                                     }
                                     .buttonStyle(.bordered)
+                                    .accessibilityLabel("Remove \(component.title)")
                                 }
                                 .padding(.vertical, 8)
                                 Divider().background(AppTheme.hairline)
@@ -100,12 +139,36 @@ struct WidgetStudioView: View {
                     SectionLabel(title: "Saved Drafts")
                     GlassPanel {
                         VStack(alignment: .leading, spacing: 10) {
-                            ForEach(drafts.prefix(5)) { draft in
-                                VStack(alignment: .leading, spacing: 3) {
-                                    Text(draft.name)
-                                    Text("\(draft.components.count) components  \(draft.theme) / \(draft.background) / \(draft.accent)  Updated \(draft.updatedAt.formatted(date: .abbreviated, time: .shortened))")
-                                        .font(.caption)
-                                        .foregroundStyle(AppTheme.secondaryText)
+                            ForEach(drafts) { draft in
+                                HStack(alignment: .top, spacing: 10) {
+                                    VStack(alignment: .leading, spacing: 3) {
+                                        Text(draft.name)
+                                        Text("\(draft.components.count) components  \(draft.theme) / \(draft.background) / \(draft.accent)  Updated \(draft.updatedAt.formatted(date: .abbreviated, time: .shortened))")
+                                            .font(.caption)
+                                            .foregroundStyle(AppTheme.secondaryText)
+                                    }
+                                    Spacer()
+                                    Button {
+                                        loadDraft(draft)
+                                    } label: {
+                                        Image(systemName: "arrow.down.doc")
+                                    }
+                                    .buttonStyle(.bordered)
+                                    .accessibilityLabel("Load \(draft.name)")
+                                    Button {
+                                        publishDraft(draft)
+                                    } label: {
+                                        Image(systemName: selectedDraftID == draft.id ? "iphone.and.arrow.forward.circle.fill" : "iphone.and.arrow.forward")
+                                    }
+                                    .buttonStyle(.bordered)
+                                    .accessibilityLabel("Use \(draft.name) for home screen widget")
+                                    Button(role: .destructive) {
+                                        deleteDraft(draft)
+                                    } label: {
+                                        Image(systemName: "trash")
+                                    }
+                                    .buttonStyle(.bordered)
+                                    .accessibilityLabel("Delete \(draft.name)")
                                 }
                                 Divider().background(AppTheme.hairline)
                             }
@@ -132,47 +195,32 @@ struct WidgetStudioView: View {
     }
 
     private var widgetPreview: some View {
-        let battery = metricValue("Battery")
-        let thermal = metricValue("Thermal State")
-        let storage = metricValue("Storage")
-        let trend = services.sensors.metrics.first(where: { $0.title == "Battery" })?.trend ?? []
-
-        return VStack(spacing: 12) {
-            HStack(spacing: 12) {
-                ZStack {
-                    Circle()
-                        .stroke(accentColor.opacity(0.25), lineWidth: 8)
-                    Circle()
-                        .trim(from: 0, to: batteryFraction)
-                        .stroke(accentColor, style: StrokeStyle(lineWidth: 8, lineCap: .round))
-                        .rotationEffect(.degrees(-90))
-                    Image(systemName: "battery.100percent")
-                        .foregroundStyle(accentColor)
-                }
-                .frame(width: 54, height: 54)
-
-                VStack(alignment: .leading) {
-                    Text("Battery")
-                        .font(.caption)
-                        .foregroundStyle(AppTheme.secondaryText)
-                    Text(battery)
-                        .font(.title.bold())
-                }
-                Spacer()
-                VStack(alignment: .leading) {
-                    Text("Thermal")
-                        .font(.caption)
-                        .foregroundStyle(AppTheme.secondaryText)
-                    Text(thermal)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 10) {
+                Image(systemName: "rectangle.stack")
+                    .foregroundStyle(accentColor)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(draftName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "Toolkit Widget" : draftName)
                         .font(.headline)
-                    Sparkline(values: trend, tint: accentColor)
-                        .frame(width: 96, height: 28)
+                        .lineLimit(1)
+                    Text("\(components.count) components  \(theme) / \(background)")
+                        .font(.caption2)
+                        .foregroundStyle(AppTheme.secondaryText)
                 }
+                Spacer(minLength: 0)
             }
 
-            HStack(spacing: 8) {
-                ForEach(components.prefix(4)) { component in
-                    smallWidgetMetric(component.title, valueForBinding(component.binding, fallback: storage), symbolForKind(component.kind))
+            if components.isEmpty {
+                Text("Blank widget canvas")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(AppTheme.secondaryText)
+                    .frame(maxWidth: .infinity, minHeight: 72, alignment: .center)
+                    .background(Color.black.opacity(0.18), in: RoundedRectangle(cornerRadius: 8))
+            } else {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 92), spacing: 8)], spacing: 8) {
+                    ForEach(components.prefix(8)) { component in
+                        smallWidgetMetric(component.title, valueForBinding(component.binding, fallback: "--"), symbolForKind(component.kind))
+                    }
                 }
             }
         }
@@ -230,16 +278,18 @@ struct WidgetStudioView: View {
         services.sensors.metrics.first(where: { $0.title == title })?.value ?? "--"
     }
 
-    private var batteryFraction: Double {
-        let raw = metricValue("Battery").replacingOccurrences(of: "%", with: "")
-        return min(1, max(0, (Double(raw) ?? 0) / 100))
-    }
-
     private func defaultBinding(for title: String) -> String {
         switch title {
+        case "Battery": return "sensor.battery"
+        case "Thermal": return "sensor.thermal"
+        case "Storage": return "sensor.storage"
+        case "Network": return "network.status"
         case "Gauge": return "sensor.battery"
         case "Chart": return "sensor.battery.trend"
         case "Sensor": return "sensor.count"
+        case "Location": return "sensor.location"
+        case "NFC": return "nfc.status"
+        case "Haptics": return "haptics.count"
         case "Image": return "asset.local"
         default: return "text.custom"
         }
@@ -249,10 +299,21 @@ struct WidgetStudioView: View {
         switch binding {
         case "sensor.battery", "sensor.battery.trend":
             return metricValue("Battery")
+        case "sensor.thermal":
+            return metricValue("Thermal State")
+        case "sensor.storage":
+            return metricValue("Storage")
         case "network.status":
             return services.network.status
         case "sensor.count":
             return "\(services.sensors.metrics.count)"
+        case "sensor.location":
+            return metricValue("Location")
+        case "nfc.status":
+            return services.nfc.status
+        case "haptics.count":
+            let sequences = AppPersistence.load([SavedHapticSequence].self, key: "haptic.sequences", fallback: [])
+            return "\(sequences.count) saved"
         case "asset.local":
             return "Image"
         case "text.custom":
@@ -270,6 +331,11 @@ struct WidgetStudioView: View {
         case "Image": return "photo"
         case "Battery": return "battery.100percent"
         case "Network": return "wifi"
+        case "Thermal": return "thermometer.medium"
+        case "Storage": return "internaldrive"
+        case "Location": return "location"
+        case "NFC": return "wave.3.right"
+        case "Haptics": return "waveform.path"
         default: return "textformat"
         }
     }
@@ -310,12 +376,54 @@ struct WidgetStudioView: View {
         drafts.insert(draft, at: 0)
         drafts = Array(drafts.prefix(20))
         AppPersistence.save(drafts, key: "widget.drafts")
-        if let data = try? JSONEncoder().encode(draft), let json = String(data: data, encoding: .utf8) {
-            UserDefaults.standard.set(data, forKey: "widget.latestDraft")
-            UserDefaults(suiteName: "group.com.personal.playgroundtoolkit")?.set(data, forKey: "widget.latestDraft")
-            services.log(json)
-        } else {
-            services.log("Widget draft saved")
+        publishDraft(draft)
+    }
+
+    private func loadDraft(_ draft: WidgetDraft) {
+        draftName = draft.name
+        theme = draft.theme
+        background = draft.background
+        accent = draft.accent
+        cornerRadius = draft.cornerRadius
+        components = draft.components
+        selectedDraftID = draft.id
+        services.log("Loaded widget draft: \(draft.name)")
+    }
+
+    private func publishDraft(_ draft: WidgetDraft) {
+        guard let data = try? JSONEncoder().encode(draft) else {
+            services.log("Widget draft could not be encoded", level: .warning)
+            return
         }
+
+        UserDefaults.standard.set(data, forKey: "widget.latestDraft")
+        if let sharedDefaults = UserDefaults(suiteName: "group.com.personal.playgroundtoolkit") {
+            sharedDefaults.set(data, forKey: "widget.latestDraft")
+        } else {
+            services.log("App Group storage is unavailable. Check the signed App Group entitlement.", level: .warning)
+        }
+        selectedDraftID = draft.id
+        WidgetCenter.shared.reloadAllTimelines()
+        services.log("Widget draft published: \(draft.name)")
+    }
+
+    private func deleteDraft(_ draft: WidgetDraft) {
+        drafts.removeAll { $0.id == draft.id }
+        AppPersistence.save(drafts, key: "widget.drafts")
+        if selectedDraftID == draft.id {
+            selectedDraftID = nil
+        }
+        services.log("Deleted widget draft: \(draft.name)")
+    }
+
+    private func componentIndex(_ component: WidgetDraftComponent) -> Int {
+        components.firstIndex { $0.id == component.id } ?? 0
+    }
+
+    private func moveComponent(_ component: WidgetDraftComponent, by offset: Int) {
+        guard let source = components.firstIndex(where: { $0.id == component.id }) else { return }
+        let destination = source + offset
+        guard components.indices.contains(destination) else { return }
+        components.swapAt(source, destination)
     }
 }
