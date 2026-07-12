@@ -52,9 +52,9 @@ struct ShortcutsView: View {
             VStack(alignment: .leading, spacing: 14) {
                 GlassPanel {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("AppIntents Catalog")
+                        Text("Apple Shortcuts Actions")
                             .font(.headline)
-                        Text("Shortcut actions are available for safe background utilities. Hardware-gated tools open the app when iOS requires foreground permission.")
+                        Text("Saved haptics, widget drafts, automation rules, and logged sensors appear as choices inside the Shortcuts app where iOS supports dynamic options.")
                             .font(.caption)
                             .foregroundStyle(AppTheme.secondaryText)
                     }
@@ -103,7 +103,7 @@ struct ShortcutsView: View {
             }
             .padding(16)
         }
-        .navigationTitle("Shortcuts")
+        .navigationTitle("Apple Shortcuts")
         .toolkitScreen()
     }
 }

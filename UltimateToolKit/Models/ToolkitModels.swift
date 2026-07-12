@@ -51,7 +51,7 @@ enum ToolkitModule: String, CaseIterable, Identifiable, Hashable {
         case .audio: return "Waveform and speech"
         case .haptics: return "Pattern editor"
         case .developerTools: return "JSON, hashes, regex"
-        case .shortcuts: return "AppIntents catalog"
+        case .shortcuts: return "Apple Shortcuts actions"
         case .ai: return "Prompt and ML tools"
         case .settings: return "Privacy and data"
         }
@@ -70,7 +70,7 @@ enum ToolkitModule: String, CaseIterable, Identifiable, Hashable {
         case .audio: return "Monitor"
         case .haptics: return "Editor"
         case .developerTools: return "Offline"
-        case .shortcuts: return "Actions"
+        case .shortcuts: return "Shortcuts"
         case .ai: return "Opt-in"
         case .settings: return "Local"
         }

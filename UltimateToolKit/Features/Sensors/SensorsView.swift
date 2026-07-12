@@ -317,16 +317,16 @@ private struct SensorLineGraph: View {
     private func graphPath(size: CGSize) -> Path {
         let safeValues = Array(values.filter { $0.isFinite }.suffix(240))
         guard safeValues.count > 1 else { return Path() }
-        let minimum = safeValues.min() ?? 0
-        let maximum = safeValues.max() ?? 1
-        let span = max(maximum - minimum, 0.0001)
+        let bounds = stableBounds(for: safeValues)
+        let span = max(bounds.upper - bounds.lower, 0.0001)
         let stepX = size.width / CGFloat(max(safeValues.count - 1, 1))
+        let plotHeight = max(1, size.height - 8)
 
         return Path { path in
             for index in safeValues.indices {
                 let x = CGFloat(index) * stepX
-                let normalized = (safeValues[index] - minimum) / span
-                let y = size.height - CGFloat(normalized) * size.height
+                let normalized = min(1, max(0, (safeValues[index] - bounds.lower) / span))
+                let y = 4 + plotHeight * (1 - CGFloat(normalized))
                 if index == safeValues.startIndex {
                     path.move(to: CGPoint(x: x, y: y))
                 } else {
@@ -334,6 +334,15 @@ private struct SensorLineGraph: View {
                 }
             }
         }
+    }
+
+    private func stableBounds(for values: [Double]) -> (lower: Double, upper: Double) {
+        let sorted = values.sorted()
+        guard let first = sorted.first, let last = sorted.last else { return (0, 1) }
+        guard sorted.count > 12 else { return (first, last) }
+        let lowIndex = max(0, Int(Double(sorted.count - 1) * 0.05))
+        let highIndex = min(sorted.count - 1, Int(Double(sorted.count - 1) * 0.95))
+        return (sorted[lowIndex], sorted[highIndex])
     }
 }
 

@@ -31,6 +31,8 @@ struct HomeView: View {
 
                 searchField
 
+                statusRibbon
+
                 HStack {
                     SectionLabel(title: "Favorites")
                     Spacer()
@@ -109,5 +111,40 @@ struct HomeView: View {
         }
         .padding(11)
         .background(AppTheme.elevatedPanel, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+
+    private var statusRibbon: some View {
+        GlassPanel {
+            HStack(spacing: 10) {
+                livePill("Sensors", services.sensors.isLogging ? "Logging" : "Ready", "waveform.path.ecg", services.sensors.isLogging ? .green : .mint)
+                livePill("Network", services.network.status, "network", .cyan)
+                livePill("NFC", services.nfc.status, "wave.3.right", .orange)
+            }
+        }
+        .onAppear {
+            services.sensors.refreshSnapshot()
+            services.network.refreshInterfaces()
+            services.nfc.refreshAvailability()
+        }
+    }
+
+    private func livePill(_ title: String, _ value: String, _ symbol: String, _ tint: Color) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: symbol)
+                .foregroundStyle(tint)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.caption2)
+                    .foregroundStyle(AppTheme.secondaryText)
+                Text(value)
+                    .font(.caption.weight(.semibold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(8)
+        .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 }

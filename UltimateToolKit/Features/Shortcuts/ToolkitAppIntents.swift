@@ -3,6 +3,49 @@ import Foundation
 import UIKit
 
 @available(iOS 16.0, *)
+struct LoggedSensorOptionsProvider: DynamicOptionsProvider {
+    func results() async throws -> [String] {
+        let samples = AppPersistence.load([SensorLogSample].self, key: "sensor.loggedSamples", fallback: [])
+        let names = Array(Set(samples.map(\.sensor))).sorted()
+        return names.isEmpty ? ["Accelerometer", "Gyroscope", "Magnetometer", "Barometer", "Location"] : names
+    }
+}
+
+@available(iOS 16.0, *)
+struct HapticSequenceOptionsProvider: DynamicOptionsProvider {
+    func results() async throws -> [String] {
+        let sequences = AppPersistence.load([SavedHapticSequence].self, key: "haptic.sequences", fallback: [])
+        let names = sequences.map(\.name)
+        return names.isEmpty ? ["Default success haptic"] : names
+    }
+}
+
+@available(iOS 16.0, *)
+struct WidgetDraftOptionsProvider: DynamicOptionsProvider {
+    func results() async throws -> [String] {
+        let drafts = AppPersistence.load([WidgetDraft].self, key: "widget.drafts", fallback: [])
+        let names = drafts.map(\.name)
+        return names.isEmpty ? ["Latest Widget Draft"] : names
+    }
+}
+
+@available(iOS 16.0, *)
+struct AutomationRuleOptionsProvider: DynamicOptionsProvider {
+    func results() async throws -> [String] {
+        let rules = AppPersistence.load([AutomationRule].self, key: "automation.rules", fallback: [])
+        let names = rules.map(\.title)
+        return names.isEmpty ? ["Battery Pulse", "Network Drop Notice", "NFC Capture Log"] : names
+    }
+}
+
+@available(iOS 16.0, *)
+struct ToolkitModuleOptionsProvider: DynamicOptionsProvider {
+    func results() async throws -> [String] {
+        ToolkitModule.allCases.map(\.title)
+    }
+}
+
+@available(iOS 16.0, *)
 struct GetBatteryLevelIntent: AppIntent {
     static var title: LocalizedStringResource = "Get Battery Level"
     static var description = IntentDescription("Returns the current device battery level as a decimal from 0 to 1.")
@@ -432,7 +475,7 @@ struct GetLatestSensorSamplesIntent: AppIntent {
     static var title: LocalizedStringResource = "Get Latest Sensor Samples"
     static var description = IntentDescription("Returns recent samples for one logged sensor stream.")
 
-    @Parameter(title: "Sensor")
+    @Parameter(title: "Sensor", optionsProvider: LoggedSensorOptionsProvider())
     var sensor: String
 
     @Parameter(title: "Count")
@@ -541,7 +584,7 @@ struct PlaySavedHapticSequenceIntent: AppIntent {
     static var title: LocalizedStringResource = "Play Saved Haptic Sequence"
     static var description = IntentDescription("Plays a saved haptic sequence by name.")
 
-    @Parameter(title: "Sequence Name")
+    @Parameter(title: "Sequence Name", optionsProvider: HapticSequenceOptionsProvider())
     var sequenceName: String
 
     init() { sequenceName = "" }
@@ -549,6 +592,14 @@ struct PlaySavedHapticSequenceIntent: AppIntent {
 
     func perform() async throws -> some IntentResult & ReturnsValue<String> {
         let sequences = AppPersistence.load([SavedHapticSequence].self, key: "haptic.sequences", fallback: [])
+        if sequenceName == "Default success haptic" {
+            await MainActor.run {
+                let generator = UINotificationFeedbackGenerator()
+                generator.prepare()
+                generator.notificationOccurred(.success)
+            }
+            return .result(value: "Played default success haptic.")
+        }
         guard let sequence = sequences.first(where: { $0.name.localizedCaseInsensitiveContains(sequenceName) }) ?? sequences.first else {
             return .result(value: "No haptic sequences saved yet.")
         }
@@ -564,7 +615,7 @@ struct ExportHapticSequenceAHAPIntent: AppIntent {
     static var title: LocalizedStringResource = "Export Haptic AHAP"
     static var description = IntentDescription("Returns AHAP JSON for a saved haptic sequence.")
 
-    @Parameter(title: "Sequence Name")
+    @Parameter(title: "Sequence Name", optionsProvider: HapticSequenceOptionsProvider())
     var sequenceName: String
 
     init() { sequenceName = "" }
@@ -598,7 +649,7 @@ struct GetWidgetDraftIntent: AppIntent {
     static var title: LocalizedStringResource = "Get Widget Draft"
     static var description = IntentDescription("Returns JSON for a saved Widget Studio draft.")
 
-    @Parameter(title: "Draft Name")
+    @Parameter(title: "Draft Name", optionsProvider: WidgetDraftOptionsProvider())
     var draftName: String
 
     init() { draftName = "" }
@@ -620,7 +671,7 @@ struct RunAutomationRuleIntent: AppIntent {
     static var title: LocalizedStringResource = "Run Automation Rule"
     static var description = IntentDescription("Runs a saved local automation rule by name and returns the action line.")
 
-    @Parameter(title: "Rule Name")
+    @Parameter(title: "Rule Name", optionsProvider: AutomationRuleOptionsProvider())
     var ruleName: String
 
     init() { ruleName = "" }
@@ -663,7 +714,7 @@ struct OpenToolkitIntent: AppIntent {
     static var description = IntentDescription("Opens the app so you can continue in a hardware-gated module.")
     static var openAppWhenRun = true
 
-    @Parameter(title: "Module")
+    @Parameter(title: "Module", optionsProvider: ToolkitModuleOptionsProvider())
     var module: String
 
     init() { module = "Home" }

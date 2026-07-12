@@ -9,7 +9,6 @@ struct UltimateToolKitApp: App {
         WindowGroup {
             RootView()
                 .environmentObject(services)
-                .preferredColorScheme(.dark)
         }
     }
 }
@@ -17,7 +16,6 @@ struct UltimateToolKitApp: App {
 enum MainTab: String, CaseIterable, Identifiable {
     case home
     case automation
-    case shortcuts
     case widgets
     case more
 
@@ -27,7 +25,6 @@ enum MainTab: String, CaseIterable, Identifiable {
         switch self {
         case .home: return "Home"
         case .automation: return "Automation"
-        case .shortcuts: return "Shortcuts"
         case .widgets: return "Widgets"
         case .more: return "More"
         }
@@ -37,7 +34,6 @@ enum MainTab: String, CaseIterable, Identifiable {
         switch self {
         case .home: return "house.fill"
         case .automation: return "gearshape.2"
-        case .shortcuts: return "point.3.connected.trianglepath.dotted"
         case .widgets: return "square.grid.2x2"
         case .more: return "ellipsis"
         }
@@ -61,10 +57,6 @@ struct RootView: View {
             NavigationStack { AutomationView() }
                 .tabItem { Label(MainTab.automation.title, systemImage: MainTab.automation.symbol) }
                 .tag(MainTab.automation)
-
-            NavigationStack { ShortcutsView() }
-                .tabItem { Label(MainTab.shortcuts.title, systemImage: MainTab.shortcuts.symbol) }
-                .tag(MainTab.shortcuts)
 
             NavigationStack { WidgetStudioView() }
                 .tabItem { Label(MainTab.widgets.title, systemImage: MainTab.widgets.symbol) }

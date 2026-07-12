@@ -8,7 +8,7 @@ import CoreNFC
 #endif
 
 struct MoreView: View {
-    private let modules: [ToolkitModule] = [.camera, .audio, .haptics, .developerTools, .ai, .settings]
+    private let modules: [ToolkitModule] = [.camera, .audio, .haptics, .developerTools, .shortcuts, .ai, .settings]
 
     var body: some View {
         ScrollView {
