@@ -91,11 +91,10 @@ struct HomeView: View {
         .navigationTitle("")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    services.log("Settings shortcut opened")
-                } label: {
+                NavigationLink(value: ToolkitModule.settings) {
                     Image(systemName: "gearshape")
                 }
+                .accessibilityLabel("Open Settings")
             }
         }
         .toolkitScreen()

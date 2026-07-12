@@ -20,8 +20,8 @@ Required upkeep:
 ## Current Execution State
 
 - Current phase: Live hardware iteration and QA handoff
-- Current step: Rebuild and retest after UI polish, stabilized sensor chart scaling, simplified tab navigation, clearer automation templates, dynamic Shortcuts parameters, adaptive theme, and app icons
-- Overall status: Expanded local prototype now includes session-based sensor logging/charts, broad AppIntents connectors, haptic sequence persistence, improved NFC diagnostics, a WidgetKit extension target, and a more polished adaptive SwiftUI shell; latest device feedback drove navigation/UI clarity and sensor graph stability improvements
+- Current step: Rebuild and retest after fixing Home settings navigation, Audio tool actions, proximity display blanking, widget fallback configuration, dropdown brightness stability, and Shortcuts side effects
+- Overall status: Expanded local prototype now includes session-based sensor logging/charts, broad AppIntents connectors, haptic sequence persistence, improved NFC diagnostics, a WidgetKit extension target, and a more polished adaptive SwiftUI shell; latest device feedback drove fixes for dead controls, iOS proximity behavior, signer-limited widget customization, and actionable Shortcut execution
 - Last updated: 2026-07-11
 - Source plan: `Plan.md`
 - UI reference: `UI UX.png`
@@ -76,6 +76,13 @@ Required upkeep:
 - [x] Reworked Automation with clearer trigger/action framing, starter templates, menu-driven condition/action choices, and a rule preview
 - [x] Added dynamic AppIntents option providers for logged sensors, saved haptic sequences, widget drafts, automation rules, and module launchers
 - [x] Added adaptive light/dark app theme and generated light/dark app icons
+- [x] Fixed Home gear button by making it navigate to Settings
+- [x] Converted Audio tool rows into actionable controls with waveform, spectrum, recorder, and speech panels
+- [x] Disabled live proximity monitoring during Sensors because iOS blanks the display when the proximity sensor is covered
+- [x] Added WidgetKit configuration parameters for title, accent, and metric slots so widgets remain customizable even when App Group draft sharing is unavailable
+- [x] Added Widget Studio App Group availability status so signing limitations are visible in-app
+- [x] Persisted automation execution log from AppIntents and retained a shared haptic player for Shortcuts-triggered haptics
+- [x] Added in-app Apple Shortcuts quick-run controls for device summary, haptics, automation rules, and widget draft checks
 
 ## In Progress
 
@@ -774,6 +781,7 @@ Each module under `Docs/Modules/` should include:
 | 2026-07-11 | Fixed stale live refresh and widget install/customization gaps from device feedback | Relayed service updates through the root environment object, removed hard-coded preview tiles, expanded Widget Studio draft controls, added App Group sharing, and enabled code signing on copy for the embedded widget extension |
 | 2026-07-11 | Added widget payload verification to the unsigned IPA workflow | CI now asserts the built `.app` includes `PlugIns/UltimateToolKitWidgets.appex` before uploading the IPA artifact |
 | 2026-07-11 | Completed broad UI and usability polish pass | Stabilized sensor graph rendering, removed the abstract Shortcuts tab, made Automation template/picker driven, added Shortcuts dynamic parameter options, enabled system light/dark styling, and added generated app icon assets |
+| 2026-07-11 | Fixed second-round device polish issues | Home settings now navigates, Audio tools are actionable, proximity monitoring no longer blanks the screen, widgets expose direct configuration fallbacks, dropdown panel material was stabilized, and Shortcuts side effects now persist/play through retained services |
 
 ## Deferred / Research Only
 

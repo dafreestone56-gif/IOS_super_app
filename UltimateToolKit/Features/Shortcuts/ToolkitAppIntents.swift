@@ -557,6 +557,7 @@ struct PlayHapticIntent: AppIntent {
 
     func perform() async throws -> some IntentResult & ReturnsValue<String> {
         await MainActor.run {
+            HapticPatternPlayer.shared.play(intensity: 0.75, sharpness: 0.45)
             let generator = UINotificationFeedbackGenerator()
             generator.prepare()
             generator.notificationOccurred(.success)
@@ -594,6 +595,7 @@ struct PlaySavedHapticSequenceIntent: AppIntent {
         let sequences = AppPersistence.load([SavedHapticSequence].self, key: "haptic.sequences", fallback: [])
         if sequenceName == "Default success haptic" {
             await MainActor.run {
+                HapticPatternPlayer.shared.play(intensity: 0.75, sharpness: 0.45)
                 let generator = UINotificationFeedbackGenerator()
                 generator.prepare()
                 generator.notificationOccurred(.success)
@@ -604,7 +606,7 @@ struct PlaySavedHapticSequenceIntent: AppIntent {
             return .result(value: "No haptic sequences saved yet.")
         }
         await MainActor.run {
-            HapticPatternPlayer().play(sequence: sequence)
+            HapticPatternPlayer.shared.play(sequence: sequence)
         }
         return .result(value: "Played haptic sequence: \(sequence.name)")
     }
@@ -685,7 +687,11 @@ struct RunAutomationRuleIntent: AppIntent {
         guard rule.isEnabled else {
             return .result(value: "Automation rule is disabled: \(rule.title)")
         }
-        return .result(value: "\(Date().formatted(date: .abbreviated, time: .standard)): \(rule.title) -> \(rule.action)")
+        let line = "\(Date().formatted(date: .abbreviated, time: .standard)): \(rule.title) -> \(rule.action)"
+        var log = AppPersistence.load([String].self, key: "automation.executionLog", fallback: [])
+        log.insert(line, at: 0)
+        AppPersistence.save(Array(log.prefix(80)), key: "automation.executionLog")
+        return .result(value: line)
     }
 }
 

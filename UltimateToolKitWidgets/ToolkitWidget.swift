@@ -19,6 +19,63 @@ enum ToolkitWidgetDisplay: String, AppEnum, CaseIterable {
     ]
 }
 
+enum ToolkitWidgetAccent: String, AppEnum, CaseIterable {
+    case blue
+    case green
+    case orange
+    case pink
+    case purple
+    case cyan
+
+    static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "Widget Accent")
+
+    static var caseDisplayRepresentations: [ToolkitWidgetAccent: DisplayRepresentation] = [
+        .blue: DisplayRepresentation(title: "Blue"),
+        .green: DisplayRepresentation(title: "Green"),
+        .orange: DisplayRepresentation(title: "Orange"),
+        .pink: DisplayRepresentation(title: "Pink"),
+        .purple: DisplayRepresentation(title: "Purple"),
+        .cyan: DisplayRepresentation(title: "Cyan")
+    ]
+}
+
+enum ToolkitWidgetMetric: String, AppEnum, CaseIterable {
+    case battery
+    case network
+    case sensors
+    case thermal
+    case storage
+    case location
+    case nfc
+    case haptics
+
+    static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "Widget Metric")
+
+    static var caseDisplayRepresentations: [ToolkitWidgetMetric: DisplayRepresentation] = [
+        .battery: DisplayRepresentation(title: "Battery"),
+        .network: DisplayRepresentation(title: "Network"),
+        .sensors: DisplayRepresentation(title: "Sensors"),
+        .thermal: DisplayRepresentation(title: "Thermal"),
+        .storage: DisplayRepresentation(title: "Storage"),
+        .location: DisplayRepresentation(title: "Location"),
+        .nfc: DisplayRepresentation(title: "NFC"),
+        .haptics: DisplayRepresentation(title: "Haptics")
+    ]
+
+    var component: SharedWidgetComponent {
+        switch self {
+        case .battery: return SharedWidgetComponent(kind: "Battery", binding: "sensor.battery", title: "Battery")
+        case .network: return SharedWidgetComponent(kind: "Network", binding: "network.status", title: "Network")
+        case .sensors: return SharedWidgetComponent(kind: "Sensor", binding: "sensor.count", title: "Sensors")
+        case .thermal: return SharedWidgetComponent(kind: "Thermal", binding: "sensor.thermal", title: "Thermal")
+        case .storage: return SharedWidgetComponent(kind: "Storage", binding: "sensor.storage", title: "Storage")
+        case .location: return SharedWidgetComponent(kind: "Location", binding: "sensor.location", title: "Location")
+        case .nfc: return SharedWidgetComponent(kind: "NFC", binding: "nfc.status", title: "NFC")
+        case .haptics: return SharedWidgetComponent(kind: "Haptics", binding: "haptics.count", title: "Haptics")
+        }
+    }
+}
+
 struct ToolkitWidgetConfigurationIntent: WidgetConfigurationIntent {
     static var title: LocalizedStringResource = "Toolkit Widget"
     static var description = IntentDescription("Choose the dashboard style shown by the widget.")
@@ -26,12 +83,41 @@ struct ToolkitWidgetConfigurationIntent: WidgetConfigurationIntent {
     @Parameter(title: "Display")
     var display: ToolkitWidgetDisplay?
 
+    @Parameter(title: "Title")
+    var customTitle: String?
+
+    @Parameter(title: "Accent")
+    var accent: ToolkitWidgetAccent?
+
+    @Parameter(title: "Metric 1")
+    var metric1: ToolkitWidgetMetric?
+
+    @Parameter(title: "Metric 2")
+    var metric2: ToolkitWidgetMetric?
+
+    @Parameter(title: "Metric 3")
+    var metric3: ToolkitWidgetMetric?
+
     init() {
         display = .system
+        customTitle = nil
+        accent = .blue
+        metric1 = .battery
+        metric2 = .network
+        metric3 = .sensors
     }
 
     var resolvedDisplay: ToolkitWidgetDisplay {
         return display ?? .system
+    }
+
+    var configuredTitle: String? {
+        let trimmed = customTitle?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
+    var configuredComponents: [SharedWidgetComponent] {
+        [metric1 ?? .battery, metric2 ?? .network, metric3 ?? .sensors].map(\.component)
     }
 }
 
@@ -86,14 +172,15 @@ struct ToolkitWidgetEntryView: View {
                 .lineLimit(2)
                 .minimumScaleFactor(0.75)
 
-            if let draft = entry.draft, entry.configuration.resolvedDisplay == .system, !draft.components.isEmpty {
+            let components = displayComponents
+            if entry.configuration.resolvedDisplay == .system, !components.isEmpty {
                 if family == .systemSmall || family == .accessoryRectangular {
-                    let component = draft.components[0]
+                    let component = components[0]
                     miniMetric(component.title, componentValue(component), symbolForKind(component.kind))
                 } else {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 72), spacing: 6)], spacing: 6) {
-                        ForEach(0..<min(draft.components.count, 4), id: \.self) { index in
-                            let component = draft.components[index]
+                        ForEach(0..<min(components.count, 4), id: \.self) { index in
+                            let component = components[index]
                             miniMetric(component.title, componentValue(component), symbolForKind(component.kind))
                         }
                     }
@@ -116,6 +203,9 @@ struct ToolkitWidgetEntryView: View {
     }
 
     private var title: String {
+        if let configuredTitle = entry.configuration.configuredTitle, entry.configuration.resolvedDisplay == .system {
+            return configuredTitle
+        }
         if let draft = entry.draft, entry.configuration.resolvedDisplay == .system {
             return draft.name
         }
@@ -131,12 +221,25 @@ struct ToolkitWidgetEntryView: View {
         if let draft = entry.draft, entry.configuration.resolvedDisplay == .system {
             return draft.components.isEmpty ? "Blank widget" : draft.theme
         }
+        if entry.configuration.configuredTitle != nil, entry.configuration.resolvedDisplay == .system {
+            return "Custom dashboard"
+        }
         switch entry.configuration.resolvedDisplay {
         case .system: return "Device toolkit ready"
         case .sensors: return "Start live logging"
         case .network: return "Run diagnostics"
         case .shortcuts: return "Connector actions"
         }
+    }
+
+    private var displayComponents: [SharedWidgetComponent] {
+        if let draft = entry.draft, entry.configuration.resolvedDisplay == .system, !draft.components.isEmpty {
+            return draft.components
+        }
+        if entry.configuration.resolvedDisplay == .system {
+            return entry.configuration.configuredComponents
+        }
+        return []
     }
 
     private func componentValue(_ component: SharedWidgetComponent) -> String {
@@ -190,6 +293,16 @@ struct ToolkitWidgetEntryView: View {
             case "Pink": return Color.pink
             case "Purple": return Color.purple
             case "Cyan": return Color.cyan
+                default: return Color.blue
+            }
+        }
+        if entry.configuration.resolvedDisplay == .system {
+            switch entry.configuration.accent ?? .blue {
+            case .green: return Color.green
+            case .orange: return Color.orange
+            case .pink: return Color.pink
+            case .purple: return Color.purple
+            case .cyan: return Color.cyan
             default: return Color.blue
             }
         }

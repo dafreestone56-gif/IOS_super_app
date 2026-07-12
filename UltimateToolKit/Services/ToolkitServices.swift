@@ -105,7 +105,7 @@ final class SensorService: NSObject, ObservableObject, CLLocationManagerDelegate
 
     func start() {
         UIDevice.current.isBatteryMonitoringEnabled = true
-        UIDevice.current.isProximityMonitoringEnabled = true
+        UIDevice.current.isProximityMonitoringEnabled = false
 
         if motionManager.isAccelerometerAvailable && !motionManager.isAccelerometerActive {
             motionManager.accelerometerUpdateInterval = 0.25
@@ -340,11 +340,11 @@ final class SensorService: NSObject, ObservableObject, CLLocationManagerDelegate
             ),
             SensorMetric(
                 title: "Proximity",
-                detail: UIDevice.current.isProximityMonitoringEnabled ? "Proximity monitor enabled" : "Proximity monitor unavailable",
-                value: UIDevice.current.proximityState ? "Near" : "Far",
+                detail: "Disabled during live charts because iOS blanks the display when the proximity sensor is covered",
+                value: "Protected",
                 symbol: "sensor",
-                tint: UIDevice.current.proximityState ? .orange : .green,
-                trend: append("proximity", value: UIDevice.current.proximityState ? 1 : 0)
+                tint: .gray,
+                trend: []
             ),
             SensorMetric(
                 title: "Orientation",
@@ -1337,7 +1337,7 @@ extension NFCService: NFCNDEFReaderSessionDelegate {
 @MainActor
 final class AutomationService: ObservableObject {
     @Published private(set) var rules: [AutomationRule] = AppPersistence.load([AutomationRule].self, key: "automation.rules", fallback: [])
-    @Published private(set) var executionLog: [String] = []
+    @Published private(set) var executionLog: [String] = AppPersistence.load([String].self, key: "automation.executionLog", fallback: [])
 
     @discardableResult
     func add(title: String, trigger: String, action: String, symbol: String = "gearshape.2.fill", tintKey: String = "purple", isEnabled: Bool = true) -> AutomationRule {
@@ -1365,12 +1365,17 @@ final class AutomationService: ObservableObject {
         let line = "\(Date().formatted(date: .abbreviated, time: .standard)): \(rule.title) -> \(rule.action)"
         executionLog.insert(line, at: 0)
         executionLog = Array(executionLog.prefix(80))
+        AppPersistence.save(executionLog, key: "automation.executionLog")
         return line
     }
 
     func delete(_ rule: AutomationRule) {
         rules.removeAll { $0.id == rule.id }
         persist()
+    }
+
+    func refreshExecutionLog() {
+        executionLog = AppPersistence.load([String].self, key: "automation.executionLog", fallback: [])
     }
 
     private func persist() {

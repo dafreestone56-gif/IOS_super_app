@@ -350,6 +350,8 @@ private struct HapticStepEditor: View {
 }
 
 final class HapticPatternPlayer: ObservableObject {
+    static let shared = HapticPatternPlayer()
+
     private var engine: CHHapticEngine?
 
     func play(intensity: Float, sharpness: Float) {

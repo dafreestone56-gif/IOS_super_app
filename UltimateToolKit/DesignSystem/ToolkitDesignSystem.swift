@@ -68,7 +68,6 @@ struct GlassPanel<Content: View>: View {
     var body: some View {
         content
             .padding(12)
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
             .background(AppTheme.panel, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 8, style: .continuous)

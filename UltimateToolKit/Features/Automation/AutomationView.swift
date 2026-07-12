@@ -41,6 +41,7 @@ struct AutomationView: View {
         .navigationTitle("Automation")
         .toolkitScreen()
         .onAppear {
+            services.automations.refreshExecutionLog()
             normalizeSelections()
         }
         .onChange(of: selectedTrigger) { _ in

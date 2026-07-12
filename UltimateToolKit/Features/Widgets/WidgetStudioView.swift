@@ -14,6 +14,7 @@ struct WidgetStudioView: View {
     ]
     @State private var drafts: [WidgetDraft] = AppPersistence.load([WidgetDraft].self, key: "widget.drafts", fallback: [])
     @State private var selectedDraftID: UUID?
+    @State private var widgetSharingStatus = ""
     private let themes = ["System", "Compact", "Instrument", "Terminal"]
     private let backgrounds = ["Blur", "Graphite", "Midnight", "Glass", "High Contrast"]
     private let accents = ["Blue", "Green", "Orange", "Pink", "Purple", "Cyan"]
@@ -35,6 +36,9 @@ struct WidgetStudioView: View {
                             Text("Toolkit Status is included as a WidgetKit extension and appears in the iOS widget gallery after install.")
                                 .font(.caption)
                                 .foregroundStyle(AppTheme.secondaryText)
+                            Text(widgetSharingStatus)
+                                .font(.caption2)
+                                .foregroundStyle(widgetSharingStatus.contains("unavailable") ? .orange : .green)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -191,6 +195,7 @@ struct WidgetStudioView: View {
         .onAppear {
             services.sensors.refreshSnapshot()
             services.network.refreshInterfaces()
+            updateWidgetSharingStatus()
         }
     }
 
@@ -355,7 +360,7 @@ struct WidgetStudioView: View {
         switch background {
         case "Graphite": return AnyShapeStyle(Color(red: 0.12, green: 0.13, blue: 0.14))
         case "Midnight": return AnyShapeStyle(Color(red: 0.05, green: 0.07, blue: 0.12))
-        case "Glass": return AnyShapeStyle(.regularMaterial)
+        case "Glass": return AnyShapeStyle(Color.white.opacity(0.12))
         case "High Contrast": return AnyShapeStyle(Color.black)
         default: return AnyShapeStyle(.ultraThinMaterial)
         }
@@ -399,12 +404,22 @@ struct WidgetStudioView: View {
         UserDefaults.standard.set(data, forKey: "widget.latestDraft")
         if let sharedDefaults = UserDefaults(suiteName: "group.com.personal.playgroundtoolkit") {
             sharedDefaults.set(data, forKey: "widget.latestDraft")
+            widgetSharingStatus = "Draft sharing is available. Home Screen widgets will reload from saved drafts."
         } else {
+            widgetSharingStatus = "Draft sharing is unavailable in this signed build. Edit the Home Screen widget directly for custom slots."
             services.log("App Group storage is unavailable. Check the signed App Group entitlement.", level: .warning)
         }
         selectedDraftID = draft.id
         WidgetCenter.shared.reloadAllTimelines()
         services.log("Widget draft published: \(draft.name)")
+    }
+
+    private func updateWidgetSharingStatus() {
+        if UserDefaults(suiteName: "group.com.personal.playgroundtoolkit") == nil {
+            widgetSharingStatus = "Draft sharing is unavailable in this signed build. Edit the Home Screen widget directly for custom slots."
+        } else {
+            widgetSharingStatus = "Draft sharing is available. Save a draft, then refresh the Home Screen widget."
+        }
     }
 
     private func deleteDraft(_ draft: WidgetDraft) {
